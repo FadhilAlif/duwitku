@@ -1,3 +1,4 @@
+import 'package:duwitku/presenters/auth_presenter.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -15,6 +16,13 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _loading = false;
+  late final AuthPresenter _authPresenter;
+
+  @override
+  void initState() {
+    super.initState();
+    _authPresenter = AuthPresenter(context);
+  }
 
   Future<void> _login() async {
     if (_formKey.currentState!.validate()) {
@@ -100,6 +108,12 @@ class _LoginScreenState extends State<LoginScreen> {
                 TextButton(
                   onPressed: () => context.go('/register'),
                   child: const Text('Don\'t have an account? Register'),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton.icon(
+                  onPressed: _loading ? null : _authPresenter.signInWithGoogle,
+                  icon: const Icon(Icons.g_mobiledata),
+                  label: const Text('Sign in with Google'),
                 ),
               ],
             ),
