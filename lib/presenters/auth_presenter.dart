@@ -10,13 +10,16 @@ class AuthPresenter {
 
   Future<void> signInWithGoogle() async {
     try {
+      final webClientId = dotenv.env['GOOGLE_CLIENT_ID'];
+
+      if (webClientId == null) {
+        throw 'GOOGLE_CLIENT_ID tidak ditemukan di .env';
+      }
+
       final googleSignIn = GoogleSignIn.instance;
 
       // Initialize with serverClientId
-      await googleSignIn.initialize(
-        serverClientId:
-            "253050485080-63ldsc989qjdq6v4lhhr07fnpdn0gifq.apps.googleusercontent.com",
-      );
+      await googleSignIn.initialize(serverClientId: webClientId);
 
       // Authenticate user
       final googleUser = await googleSignIn.authenticate();
