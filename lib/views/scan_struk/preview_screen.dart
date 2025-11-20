@@ -4,10 +4,7 @@ import 'package:flutter/material.dart';
 class PreviewScreen extends StatelessWidget {
   final String imagePath;
 
-  const PreviewScreen({
-    super.key,
-    required this.imagePath,
-  });
+  const PreviewScreen({super.key, required this.imagePath});
 
   @override
   Widget build(BuildContext context) {
@@ -24,9 +21,7 @@ class PreviewScreen extends StatelessWidget {
               // TODO: Implement OCR and process receipt
               Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Fitur OCR akan segera hadir!'),
-                ),
+                const SnackBar(content: Text('Fitur OCR akan segera hadir!')),
               );
             },
           ),
@@ -39,10 +34,7 @@ class PreviewScreen extends StatelessWidget {
               child: InteractiveViewer(
                 minScale: 0.5,
                 maxScale: 4.0,
-                child: Image.file(
-                  File(imagePath),
-                  fit: BoxFit.contain,
-                ),
+                child: Image.file(File(imagePath), fit: BoxFit.contain),
               ),
             ),
           ),
@@ -70,9 +62,7 @@ class PreviewScreen extends StatelessWidget {
                       // TODO: Implement OCR and process receipt
                       Navigator.pop(context);
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Memproses struk...'),
-                        ),
+                        const SnackBar(content: Text('Memproses struk...')),
                       );
                     },
                     icon: const Icon(Icons.check_circle),

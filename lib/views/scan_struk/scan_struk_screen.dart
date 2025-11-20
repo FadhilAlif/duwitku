@@ -87,9 +87,7 @@ class _ScanStrukScreenState extends State<ScanStrukScreen> {
         children: [
           // Camera Preview or Status Screens
           if (state.isLoading)
-            const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            )
+            const Center(child: CircularProgressIndicator(color: Colors.white))
           else if (!state.hasPermission)
             CameraPermissionWidget(
               isPermanentlyDenied: state.isPermanentlyDenied,
@@ -103,9 +101,7 @@ class _ScanStrukScreenState extends State<ScanStrukScreen> {
           else if (state.isInitialized && cameraController != null)
             CameraPreviewWidget(cameraController: cameraController)
           else
-            const Center(
-              child: CircularProgressIndicator(color: Colors.white),
-            ),
+            const Center(child: CircularProgressIndicator(color: Colors.white)),
 
           // Top Controls
           if (state.isInitialized && cameraController != null)

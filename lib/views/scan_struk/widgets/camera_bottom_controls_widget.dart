@@ -42,16 +42,11 @@ class CameraBottomControlsWidget extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: Colors.white,
-                  border: Border.all(
-                    color: Colors.black87,
-                    width: 4,
-                  ),
+                  border: Border.all(color: Colors.black87, width: 4),
                 ),
                 child: isLoading
                     ? const Center(
-                        child: CircularProgressIndicator(
-                          strokeWidth: 3,
-                        ),
+                        child: CircularProgressIndicator(strokeWidth: 3),
                       )
                     : null,
               ),

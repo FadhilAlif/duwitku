@@ -30,31 +30,37 @@ class CameraNotifier extends ChangeNotifier {
       if (status.isDenied) {
         final result = await Permission.camera.request();
         if (result.isDenied) {
-          _updateState(_state.copyWith(
-            hasPermission: false,
-            isLoading: false,
-            errorMessage: 'Izin kamera diperlukan untuk mengambil foto',
-          ));
+          _updateState(
+            _state.copyWith(
+              hasPermission: false,
+              isLoading: false,
+              errorMessage: 'Izin kamera diperlukan untuk mengambil foto',
+            ),
+          );
           return;
         }
         if (result.isPermanentlyDenied) {
-          _updateState(_state.copyWith(
-            hasPermission: false,
-            isPermanentlyDenied: true,
-            isLoading: false,
-            errorMessage: 'Izin kamera ditolak secara permanen',
-          ));
+          _updateState(
+            _state.copyWith(
+              hasPermission: false,
+              isPermanentlyDenied: true,
+              isLoading: false,
+              errorMessage: 'Izin kamera ditolak secara permanen',
+            ),
+          );
           return;
         }
       }
 
       if (status.isPermanentlyDenied) {
-        _updateState(_state.copyWith(
-          hasPermission: false,
-          isPermanentlyDenied: true,
-          isLoading: false,
-          errorMessage: 'Izin kamera ditolak secara permanen',
-        ));
+        _updateState(
+          _state.copyWith(
+            hasPermission: false,
+            isPermanentlyDenied: true,
+            isLoading: false,
+            errorMessage: 'Izin kamera ditolak secara permanen',
+          ),
+        );
         return;
       }
 
@@ -62,10 +68,12 @@ class CameraNotifier extends ChangeNotifier {
       _cameras = await availableCameras();
 
       if (_cameras == null || _cameras!.isEmpty) {
-        _updateState(_state.copyWith(
-          isLoading: false,
-          errorMessage: 'Tidak ada kamera yang tersedia',
-        ));
+        _updateState(
+          _state.copyWith(
+            isLoading: false,
+            errorMessage: 'Tidak ada kamera yang tersedia',
+          ),
+        );
         return;
       }
 
@@ -85,17 +93,21 @@ class CameraNotifier extends ChangeNotifier {
 
       await _cameraController!.initialize();
 
-      _updateState(_state.copyWith(
-        isInitialized: true,
-        hasPermission: true,
-        isLoading: false,
-        errorMessage: null,
-      ));
+      _updateState(
+        _state.copyWith(
+          isInitialized: true,
+          hasPermission: true,
+          isLoading: false,
+          errorMessage: null,
+        ),
+      );
     } catch (e) {
-      _updateState(_state.copyWith(
-        isLoading: false,
-        errorMessage: 'Gagal menginisialisasi kamera: ${e.toString()}',
-      ));
+      _updateState(
+        _state.copyWith(
+          isLoading: false,
+          errorMessage: 'Gagal menginisialisasi kamera: ${e.toString()}',
+        ),
+      );
     }
   }
 
@@ -109,9 +121,9 @@ class CameraNotifier extends ChangeNotifier {
       await _cameraController!.setFlashMode(newFlashMode);
       _updateState(_state.copyWith(isFlashOn: !_state.isFlashOn));
     } catch (e) {
-      _updateState(_state.copyWith(
-        errorMessage: 'Gagal mengubah flash: ${e.toString()}',
-      ));
+      _updateState(
+        _state.copyWith(errorMessage: 'Gagal mengubah flash: ${e.toString()}'),
+      );
     }
   }
 
@@ -147,17 +159,21 @@ class CameraNotifier extends ChangeNotifier {
 
       await _cameraController!.initialize();
 
-      _updateState(_state.copyWith(
-        lensDirection: newLensDirection,
-        isInitialized: true,
-        isLoading: false,
-        isFlashOn: false,
-      ));
+      _updateState(
+        _state.copyWith(
+          lensDirection: newLensDirection,
+          isInitialized: true,
+          isLoading: false,
+          isFlashOn: false,
+        ),
+      );
     } catch (e) {
-      _updateState(_state.copyWith(
-        isLoading: false,
-        errorMessage: 'Gagal mengganti kamera: ${e.toString()}',
-      ));
+      _updateState(
+        _state.copyWith(
+          isLoading: false,
+          errorMessage: 'Gagal mengganti kamera: ${e.toString()}',
+        ),
+      );
     }
   }
 
@@ -171,9 +187,9 @@ class CameraNotifier extends ChangeNotifier {
       _updateState(_state.copyWith(imagePath: image.path));
       return image.path;
     } catch (e) {
-      _updateState(_state.copyWith(
-        errorMessage: 'Gagal mengambil foto: ${e.toString()}',
-      ));
+      _updateState(
+        _state.copyWith(errorMessage: 'Gagal mengambil foto: ${e.toString()}'),
+      );
       return null;
     }
   }
@@ -191,9 +207,9 @@ class CameraNotifier extends ChangeNotifier {
       }
       return null;
     } catch (e) {
-      _updateState(_state.copyWith(
-        errorMessage: 'Gagal memilih gambar: ${e.toString()}',
-      ));
+      _updateState(
+        _state.copyWith(errorMessage: 'Gagal memilih gambar: ${e.toString()}'),
+      );
       return null;
     }
   }
