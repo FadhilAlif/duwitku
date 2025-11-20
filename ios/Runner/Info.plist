@@ -45,5 +45,9 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app requires access to the photo library to let you pick a profile picture or receipt image.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app requires access to the camera to let you take a new profile picture or receipt photo.</string>
 </dict>
 </plist>
