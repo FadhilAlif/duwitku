@@ -1,6 +1,7 @@
 import 'package:duwitku/utils/go_router_refresh_stream.dart';
 import 'package:duwitku/views/add_transaction/add_transaction_screen.dart';
 import 'package:duwitku/views/chat_prompt/chat_prompt_screen.dart';
+import 'package:duwitku/views/edit_profile/edit_profile_screen.dart';
 import 'package:duwitku/views/login/login_screen.dart';
 import 'package:duwitku/views/main_navigation/main_navigation_screen.dart';
 import 'package:duwitku/views/register/register_screen.dart';
@@ -11,12 +12,17 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 final router = GoRouter(
-  refreshListenable: GoRouterRefreshStream(
-    Supabase.instance.client.auth.onAuthStateChange,
-  ),
+  refreshListenable:
+      GoRouterRefreshStream(Supabase.instance.client.auth.onAuthStateChange),
   routes: [
-    GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
-    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
+    GoRoute(
+      path: '/',
+      builder: (context, state) => const SplashScreen(),
+    ),
+    GoRoute(
+      path: '/login',
+      builder: (context, state) => const LoginScreen(),
+    ),
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
@@ -24,24 +30,26 @@ final router = GoRouter(
     GoRoute(
       path: '/main',
       builder: (context, state) => const MainNavigationScreen(),
-      routes: [
-        GoRoute(
-          path: 'manage_categories',
-          builder: (context, state) => const AddTransactionScreen(),
-        ),
-        GoRoute(
-          path: 'scan_struk',
-          builder: (context, state) => const ScanStrukScreen(),
-        ),
-        GoRoute(
-          path: 'chat_prompt',
-          builder: (context, state) => const ChatPromptScreen(),
-        ),
-        GoRoute(
-          path: 'transaction_form',
-          builder: (context, state) => const TransactionFormScreen(),
-        ),
-      ],
+    ),
+    GoRoute(
+      path: '/manage_categories',
+      builder: (context, state) => const AddTransactionScreen(),
+    ),
+    GoRoute(
+      path: '/scan_struk',
+      builder: (context, state) => const ScanStrukScreen(),
+    ),
+    GoRoute(
+      path: '/chat_prompt',
+      builder: (context, state) => const ChatPromptScreen(),
+    ),
+    GoRoute(
+      path: '/transaction_form',
+      builder: (context, state) => const TransactionFormScreen(),
+    ),
+    GoRoute(
+      path: '/edit_profile',
+      builder: (context, state) => const EditProfileScreen(),
     ),
   ],
   redirect: (context, state) {
@@ -49,8 +57,7 @@ final router = GoRouter(
     final isAuth = session != null;
     final isSplashing = state.matchedLocation == '/';
     final isLoggingIn =
-        state.matchedLocation == '/login' ||
-        state.matchedLocation == '/register';
+        state.matchedLocation == '/login' || state.matchedLocation == '/register';
 
     if (!isAuth && !isLoggingIn) {
       if (isSplashing) {

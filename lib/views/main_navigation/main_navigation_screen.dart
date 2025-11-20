@@ -44,7 +44,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               title: const Text('Scan Struk'),
               onTap: () {
                 Navigator.pop(context);
-                context.push('/main/scan_struk');
+                context.push('/scan_struk');
               },
             ),
             ListTile(
@@ -52,7 +52,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               title: const Text('Create Transaction'),
               onTap: () {
                 Navigator.pop(context);
-                context.push('/main/transaction_form');
+                context.push('/transaction_form');
               },
             ),
             ListTile(
@@ -60,7 +60,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               title: const Text('Manage Categories'),
               onTap: () {
                 Navigator.pop(context);
-                context.push('/main/manage_categories');
+                context.push('/manage_categories');
               },
             ),
             ListTile(
@@ -68,7 +68,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               title: const Text('Chat Prompt'),
               onTap: () {
                 Navigator.pop(context);
-                context.push('/main/chat_prompt');
+                context.push('/chat_prompt');
               },
             ),
             const SizedBox(height: 20),
