@@ -3,6 +3,7 @@ import 'package:duwitku/views/home/home_screen.dart';
 import 'package:duwitku/views/profile/profile_screen.dart';
 import 'package:duwitku/views/transaction/transaction_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:go_router/go_router.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 
 class MainNavigationScreen extends StatefulWidget {
@@ -15,17 +16,71 @@ class MainNavigationScreen extends StatefulWidget {
 class _MainNavigationScreenState extends State<MainNavigationScreen> {
   int _selectedIndex = 0;
 
-  static const List<Widget> _widgetOptions = <Widget>[
+  static final List<Widget> _widgetOptions = <Widget>[
     HomeScreen(),
     TransactionScreen(),
     BudgetScreen(),
     ProfileScreen(),
   ];
 
+  void _showAddTransactionModal(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (context) {
+        return Wrap(
+          children: <Widget>[
+            const ListTile(
+              title: Text(
+                'Add New Transaction',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Scan Struk'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/scan_struk');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.edit_document),
+              title: const Text('Tambah Transaksi'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/add_transaction');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.chat_bubble_outline),
+              title: const Text('Chat Prompt'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/chat_prompt');
+              },
+            ),
+            const SizedBox(height: 20),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showAddTransactionModal(context),
+        backgroundColor: const Color(0xFF14894e),
+        foregroundColor: Colors.white,
+        child: const Icon(Icons.add),
+      ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
           color: Colors.white,
