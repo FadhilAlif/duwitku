@@ -52,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text,
         );
         if (mounted) {
-          context.go('/home');
+          context.go('/main');
         }
       } on AuthException catch (error) {
         if (!mounted) return;

@@ -16,6 +16,7 @@ dependencies:
   google_nav_bar: ^5.0.7
   google_sign_in: ^7.2.0
   intl: ^0.20.2
+  material_symbols_icons: ^4.2874.0
   riverpod_annotation: ^3.0.3
   sign_in_button: ^4.0.1
   skeletonizer: ^2.1.0+1

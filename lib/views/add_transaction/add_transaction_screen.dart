@@ -1,5 +1,6 @@
 import 'package:duwitku/models/category.dart';
 import 'package:duwitku/providers/category_provider.dart';
+import 'package:duwitku/utils/icon_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,161 +12,83 @@ class AddTransactionScreen extends ConsumerWidget {
     WidgetRef ref, [
     Category? category,
   ]) async {
-    final nameController = TextEditingController(text: category?.name ?? '');
-    final formKey = GlobalKey<FormState>();
-    CategoryType type = category?.type ?? CategoryType.expense;
-
-    final result = await showDialog<bool>(
+    final result = await showDialog<Map<String, dynamic>?>(
       context: context,
       barrierDismissible: false,
-      builder: (dialogContext) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            return AlertDialog(
-              title: Text(category == null ? 'Add Category' : 'Edit Category'),
-              content: Form(
-                key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    TextFormField(
-                      controller: nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Category Name',
-                        border: OutlineInputBorder(),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.trim().isEmpty) {
-                          return 'Please enter a category name';
-                        }
-                        return null;
-                      },
-                      autofocus: true,
-                    ),
-                    const SizedBox(height: 16),
-                    DropdownButtonFormField<CategoryType>(
-                      initialValue: type,
-                      decoration: const InputDecoration(
-                        labelText: 'Type',
-                        border: OutlineInputBorder(),
-                      ),
-                      items: CategoryType.values.map((CategoryType value) {
-                        return DropdownMenuItem<CategoryType>(
-                          value: value,
-                          child: Text(
-                            value.name.toUpperCase(),
-                            style: TextStyle(
-                              color: value == CategoryType.income
-                                  ? Colors.green
-                                  : Colors.red,
-                            ),
-                          ),
-                        );
-                      }).toList(),
-                      onChanged: (CategoryType? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            type = newValue;
-                          });
-                        }
-                      },
-                    ),
-                  ],
-                ),
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(dialogContext, false),
-                  child: const Text('Cancel'),
-                ),
-                FilledButton(
-                  onPressed: () async {
-                    if (formKey.currentState?.validate() ?? false) {
-                      Navigator.pop(dialogContext, true);
-                    }
-                  },
-                  child: const Text('Save'),
-                ),
-              ],
-            );
-          },
-        );
-      },
+      builder: (dialogContext) => _CategoryDialog(category: category),
     );
 
-    if (result == true && context.mounted) {
-      final name = nameController.text.trim();
-      if (name.isNotEmpty) {
-        try {
-          final repo = ref.read(categoryRepositoryProvider);
+    if (result != null && context.mounted) {
+      final name = result['name'] as String;
+      final type = result['type'] as CategoryType;
 
-          // Show loading indicator
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Row(
-                  children: [
-                    SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2),
-                    ),
-                    SizedBox(width: 16),
-                    Text('Saving...'),
-                  ],
-                ),
-                duration: Duration(seconds: 2),
-              ),
-            );
-          }
+      try {
+        final repo = ref.read(categoryRepositoryProvider);
 
-          if (category == null) {
-            // Create new category
-            await repo.createCategory(Category(id: 0, name: name, type: type));
-          } else {
-            // Update existing category
-            await repo.updateCategory(
-              Category(
-                id: category.id,
-                name: name,
-                type: type,
-                userId: category.userId,
-                isDefault: category.isDefault,
-                iconName: category.iconName,
+        // Show loading indicator
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Row(
+                children: [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                  SizedBox(width: 16),
+                  Text('Saving...'),
+                ],
               ),
-            );
-          }
+              duration: Duration(seconds: 2),
+            ),
+          );
+        }
 
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  category == null
-                      ? 'Category created successfully'
-                      : 'Category updated successfully',
-                ),
-                backgroundColor: Colors.green,
-                behavior: SnackBarBehavior.floating,
+        if (category == null) {
+          // Create new category
+          await repo.createCategory(Category(id: 0, name: name, type: type));
+        } else {
+          // Update existing category
+          await repo.updateCategory(
+            Category(
+              id: category.id,
+              name: name,
+              type: type,
+              userId: category.userId,
+              isDefault: category.isDefault,
+              iconName: category.iconName,
+            ),
+          );
+        }
+
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                category == null
+                    ? 'Category created successfully'
+                    : 'Category updated successfully',
               ),
-            );
-          }
-        } catch (e) {
-          if (context.mounted) {
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text('Error: ${e.toString()}'),
-                backgroundColor: Colors.red,
-                behavior: SnackBarBehavior.floating,
-              ),
-            );
-          }
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).hideCurrentSnackBar();
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error: ${e.toString()}'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+            ),
+          );
         }
       }
     }
-
-    nameController.dispose();
   }
 
   Future<void> _deleteCategory(
@@ -368,6 +291,8 @@ class AddTransactionScreen extends ConsumerWidget {
     WidgetRef ref,
     Category category,
   ) {
+    final isDefault = category.isDefault;
+
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: ListTile(
@@ -376,17 +301,37 @@ class AddTransactionScreen extends ConsumerWidget {
               ? Colors.green.shade100
               : Colors.red.shade100,
           child: Icon(
-            category.type == CategoryType.income
-                ? Icons.trending_up
-                : Icons.trending_down,
+            IconHelper.getIcon(category.iconName),
             color: category.type == CategoryType.income
                 ? Colors.green
                 : Colors.red,
           ),
         ),
-        title: Text(
-          category.name,
-          style: const TextStyle(fontWeight: FontWeight.w500),
+        title: Row(
+          children: [
+            Expanded(
+              child: Text(
+                category.name,
+                style: const TextStyle(fontWeight: FontWeight.w500),
+              ),
+            ),
+            if (isDefault)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Colors.blue.shade100,
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  'DEFAULT',
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: Colors.blue.shade700,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+          ],
         ),
         subtitle: Text(
           category.type.name.toUpperCase(),
@@ -397,22 +342,132 @@ class AddTransactionScreen extends ConsumerWidget {
                 : Colors.red,
           ),
         ),
-        trailing: Row(
+        trailing: isDefault
+            ? Tooltip(
+                message: 'Default categories cannot be edited or deleted',
+                child: Icon(Icons.lock_outline, color: Colors.grey.shade400),
+              )
+            : Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.edit_outlined),
+                    onPressed: () =>
+                        _showCategoryDialog(context, ref, category),
+                    tooltip: 'Edit',
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: Colors.red),
+                    onPressed: () => _deleteCategory(context, ref, category),
+                    tooltip: 'Delete',
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+// Separate dialog widget to prevent setState issues
+class _CategoryDialog extends StatefulWidget {
+  final Category? category;
+
+  const _CategoryDialog({this.category});
+
+  @override
+  State<_CategoryDialog> createState() => _CategoryDialogState();
+}
+
+class _CategoryDialogState extends State<_CategoryDialog> {
+  late final TextEditingController _nameController;
+  late final GlobalKey<FormState> _formKey;
+  late CategoryType _selectedType;
+
+  @override
+  void initState() {
+    super.initState();
+    _nameController = TextEditingController(text: widget.category?.name ?? '');
+    _formKey = GlobalKey<FormState>();
+    _selectedType = widget.category?.type ?? CategoryType.expense;
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text(widget.category == null ? 'Add Category' : 'Edit Category'),
+      content: Form(
+        key: _formKey,
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            IconButton(
-              icon: const Icon(Icons.edit_outlined),
-              onPressed: () => _showCategoryDialog(context, ref, category),
-              tooltip: 'Edit',
+            TextFormField(
+              controller: _nameController,
+              decoration: const InputDecoration(
+                labelText: 'Category Name',
+                border: OutlineInputBorder(),
+              ),
+              validator: (value) {
+                if (value == null || value.trim().isEmpty) {
+                  return 'Please enter a category name';
+                }
+                return null;
+              },
+              autofocus: true,
             ),
-            IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
-              onPressed: () => _deleteCategory(context, ref, category),
-              tooltip: 'Delete',
+            const SizedBox(height: 16),
+            DropdownButtonFormField<CategoryType>(
+              initialValue: _selectedType,
+              decoration: const InputDecoration(
+                labelText: 'Type',
+                border: OutlineInputBorder(),
+              ),
+              items: CategoryType.values.map((CategoryType value) {
+                return DropdownMenuItem<CategoryType>(
+                  value: value,
+                  child: Text(
+                    value.name.toUpperCase(),
+                    style: TextStyle(
+                      color: value == CategoryType.income
+                          ? Colors.green
+                          : Colors.red,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onChanged: (CategoryType? newValue) {
+                if (newValue != null && mounted) {
+                  setState(() {
+                    _selectedType = newValue;
+                  });
+                }
+              },
             ),
           ],
         ),
       ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            if (_formKey.currentState?.validate() ?? false) {
+              Navigator.pop(context, {
+                'name': _nameController.text.trim(),
+                'type': _selectedType,
+              });
+            }
+          },
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }
