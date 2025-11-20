@@ -5,55 +5,65 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 class AuthPresenter {
   final BuildContext context;
+  final VoidCallback? onLoadingChanged;
 
-  AuthPresenter(this.context);
+  AuthPresenter(this.context, {this.onLoadingChanged});
 
   Future<void> signInWithGoogle() async {
     try {
-      final webClientId = dotenv.env['GOOGLE_CLIENT_ID'];
+      _setLoading(true);
 
+      final webClientId = dotenv.env['GOOGLE_CLIENT_ID'];
       if (webClientId == null) {
-        throw 'GOOGLE_CLIENT_ID tidak ditemukan di .env';
+        throw Exception('GOOGLE_CLIENT_ID tidak ditemukan di .env');
       }
 
       final googleSignIn = GoogleSignIn.instance;
-
-      // Initialize with serverClientId
       await googleSignIn.initialize(serverClientId: webClientId);
 
-      // Authenticate user
       final googleUser = await googleSignIn.authenticate();
-
-      // Get ID token from authentication
       final idToken = googleUser.authentication.idToken;
 
-      // Get access token from authorization client
       final authorization = await googleUser.authorizationClient
           .authorizationForScopes(<String>['email']);
 
       if (authorization == null) {
-        throw 'No authorization found.';
+        throw Exception('No authorization found');
       }
 
-      final accessToken = authorization.accessToken;
-
       if (idToken == null) {
-        throw 'No ID Token found.';
+        throw Exception('No ID Token found');
       }
 
       await Supabase.instance.client.auth.signInWithIdToken(
         provider: OAuthProvider.google,
         idToken: idToken,
-        accessToken: accessToken,
+        accessToken: authorization.accessToken,
       );
-    } catch (error) {
-      if (!context.mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Google Sign-In failed: $error'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+    } on AuthException catch (e) {
+      _showError('Google Sign-In failed: ${e.message}');
+    } on Exception catch (e) {
+      _showError(e.toString());
+    } catch (e) {
+      _showError('An unexpected error occurred: $e');
+    } finally {
+      _setLoading(false);
     }
+  }
+
+  void _setLoading(bool loading) {
+    if (onLoadingChanged != null) {
+      onLoadingChanged!();
+    }
+  }
+
+  void _showError(String message) {
+    if (!context.mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Theme.of(context).colorScheme.error,
+      ),
+    );
   }
 }
