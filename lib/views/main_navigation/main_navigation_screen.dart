@@ -44,15 +44,23 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               title: const Text('Scan Struk'),
               onTap: () {
                 Navigator.pop(context);
-                context.push('/scan_struk');
+                context.push('/main/scan_struk');
               },
             ),
             ListTile(
               leading: const Icon(Icons.edit_document),
-              title: const Text('Tambah Transaksi'),
+              title: const Text('Create Transaction'),
               onTap: () {
                 Navigator.pop(context);
-                context.push('/add_transaction');
+                context.push('/main/transaction_form');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.category),
+              title: const Text('Manage Categories'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/main/manage_categories');
               },
             ),
             ListTile(
@@ -60,7 +68,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               title: const Text('Chat Prompt'),
               onTap: () {
                 Navigator.pop(context);
-                context.push('/chat_prompt');
+                context.push('/main/chat_prompt');
               },
             ),
             const SizedBox(height: 20),
