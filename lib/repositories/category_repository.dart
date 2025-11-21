@@ -8,7 +8,7 @@ class CategoryRepository {
   Stream<List<Category>> streamCategories() {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
-      throw Exception('User is not authenticated');
+      throw Exception('Pengguna tidak terautentikasi');
     }
 
     // Stream that combines user-specific categories and default categories
@@ -43,7 +43,7 @@ class CategoryRepository {
   Future<void> createCategory(Category category) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
-      throw Exception('User is not authenticated');
+      throw Exception('Pengguna tidak terautentikasi');
     }
 
     final data = category.toJson();
@@ -55,7 +55,7 @@ class CategoryRepository {
   Future<void> updateCategory(Category category) async {
     // Prevent updating default categories
     if (category.isDefault) {
-      throw Exception('Cannot update default categories');
+      throw Exception('Tidak dapat memperbarui kategori bawaan');
     }
 
     await _client
@@ -73,7 +73,7 @@ class CategoryRepository {
         .single();
 
     if (response['is_default'] == true) {
-      throw Exception('Cannot delete default categories');
+      throw Exception('Tidak dapat menghapus kategori bawaan');
     }
 
     await _client.from('categories').delete().eq('id', id);

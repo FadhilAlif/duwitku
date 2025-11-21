@@ -10,7 +10,7 @@ class ChatPromptScreen extends StatelessWidget {
         title: const Text('Chat Prompt'),
       ),
       body: const Center(
-        child: Text('Chat Prompt Screen'),
+        child: Text('Layar Chat Prompt'),
       ),
     );
   }

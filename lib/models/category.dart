@@ -11,7 +11,7 @@ extension CategoryTypeExtension on String {
       case 'expense':
         return CategoryType.expense;
       default:
-        throw Exception('Unknown CategoryType: $this');
+        throw Exception('Tipe Kategori tidak dikenal: $this');
     }
   }
 }

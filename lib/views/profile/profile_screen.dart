@@ -13,12 +13,12 @@ class ProfileScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Logout'),
-        content: const Text('Are you sure you want to sign out?'),
+        title: const Text('Keluar'),
+        content: const Text('Apakah Anda yakin ingin keluar?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
@@ -26,7 +26,7 @@ class ProfileScreen extends ConsumerWidget {
               backgroundColor: Theme.of(context).colorScheme.errorContainer,
               foregroundColor: Theme.of(context).colorScheme.onErrorContainer,
             ),
-            child: const Text('Logout'),
+            child: const Text('Keluar'),
           ),
         ],
       ),
@@ -42,40 +42,49 @@ class ProfileScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface,
+      appBar: AppBar(
+        title: const Text(
+          'Profil & Pengaturan',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
+      ),
       body: SingleChildScrollView(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const ProfileHeader(),
-            const ProfileSectionHeader(title: 'Account'),
+            const ProfileSectionHeader(title: 'Akun'),
             ProfileMenuItem(
               icon: Icons.person_outline,
-              title: 'Personal Information',
-              subtitle: 'Manage your account details',
+              title: 'Informasi Pribadi',
+              subtitle: 'Kelola detail akun Anda',
               onTap: () {
                 context.push('/edit_profile');
               },
             ),
             ProfileMenuItem(
               icon: Icons.category_outlined,
-              title: 'Manage Categories',
-              subtitle: 'Add, edit, or delete your custom categories',
+              title: 'Kelola Kategori',
+              subtitle: 'Tambah, ubah, atau hapus kategori Anda',
               onTap: () {
                 context.push('/manage_categories');
               },
             ),
-            const ProfileSectionHeader(title: 'General'),
+            const ProfileSectionHeader(title: 'Umum'),
             ProfileMenuItem(
               icon: Icons.notifications_outlined,
-              title: 'Notifications',
-              subtitle: 'Manage notification settings',
+              title: 'Notifikasi',
+              subtitle: 'Kelola pengaturan notifikasi',
               onTap: () {},
             ),
-            const ProfileSectionHeader(title: 'Account Actions'),
+            const ProfileSectionHeader(title: 'Tindakan Akun'),
             ProfileMenuItem(
               icon: Icons.logout,
-              title: 'Logout',
-              subtitle: 'Sign out from your account',
+              title: 'Keluar',
+              subtitle: 'Keluar dari akun Anda',
               iconColor: Theme.of(context).colorScheme.error,
               textColor: Theme.of(context).colorScheme.error,
               showDivider: false,
@@ -86,7 +95,7 @@ class ProfileScreen extends ConsumerWidget {
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 24),
                 child: Text(
-                  'App Version 0.1.0',
+                  'Versi Aplikasi 0.1.0',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                     color: Theme.of(
                       context,

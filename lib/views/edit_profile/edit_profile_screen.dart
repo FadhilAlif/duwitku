@@ -7,10 +7,10 @@ class EditProfileScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Edit Profile'),
+        title: const Text('Ubah Profil'),
       ),
       body: const Center(
-        child: Text('Edit Profile Screen - Coming Soon!'),
+        child: Text('Layar Ubah Profil - Segera Hadir!'),
       ),
     );
   }

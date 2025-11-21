@@ -12,7 +12,7 @@ class TransactionRepository {
   }) {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
-      throw Exception('User is not authenticated');
+      throw Exception('Pengguna tidak terautentikasi');
     }
 
     // Workaround: Filter client-side if the analyzer has issues with Supabase builder methods.
@@ -33,7 +33,7 @@ class TransactionRepository {
   Future<void> addTransaction(Transaction transaction) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {
-      throw Exception('User is not authenticated');
+      throw Exception('Pengguna tidak terautentikasi');
     }
 
     final data = transaction.toJson();

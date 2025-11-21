@@ -18,7 +18,7 @@ extension StringExtension on String {
       case 'expense':
         return TransactionType.expense;
       default:
-        throw Exception('Unknown TransactionType: $this');
+        throw Exception('Tipe Transaksi tidak dikenal: $this');
     }
   }
 
@@ -33,7 +33,7 @@ extension StringExtension on String {
       case 'initial':
         return SourceType.initial;
       default:
-        throw Exception('Unknown SourceType: $this');
+        throw Exception('Tipe Sumber tidak dikenal: $this');
     }
   }
 }

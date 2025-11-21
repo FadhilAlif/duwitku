@@ -22,7 +22,13 @@ class HomeScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Dashboard'),
+        title: const Text(
+          'Beranda',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        elevation: 0,
+        backgroundColor: Colors.transparent,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
@@ -86,7 +92,7 @@ class HomeScreen extends ConsumerWidget {
                   child: Column(
                     children: [
                       Text(
-                        'Balance',
+                        'Saldo',
                         style: Theme.of(context).textTheme.labelLarge,
                       ),
                       Text(
@@ -101,13 +107,13 @@ class HomeScreen extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
                           _SummaryColumn(
-                            title: 'Income',
+                            title: 'Pemasukan',
                             amount: totalIncome,
                             color: Colors.green,
                             formatter: currencyFormatter,
                           ),
                           _SummaryColumn(
-                            title: 'Expense',
+                            title: 'Pengeluaran',
                             amount: totalExpense,
                             color: Colors.red,
                             formatter: currencyFormatter,
@@ -120,14 +126,14 @@ class HomeScreen extends ConsumerWidget {
               );
             },
             loading: () => const SizedBox.shrink(),
-            error: (err, stack) => Text('Error: $err'),
+            error: (err, stack) => Text('Terjadi kesalahan: $err'),
           ),
           const Padding(
             padding: EdgeInsets.all(16.0),
             child: Align(
               alignment: Alignment.centerLeft,
               child: Text(
-                'Recent Transactions',
+                'Transaksi Terkini',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
@@ -138,7 +144,7 @@ class HomeScreen extends ConsumerWidget {
               data: (transactions) {
                 if (transactions.isEmpty) {
                   return const Center(
-                    child: Text('No transactions this month.'),
+                    child: Text('Tidak ada transaksi bulan ini.'),
                   );
                 }
                 return categoriesAsync.when(
@@ -159,9 +165,9 @@ class HomeScreen extends ConsumerWidget {
                             color: isIncome ? Colors.green : Colors.red,
                           ),
                           title: Text(
-                            transaction.description ?? category?.name ?? 'N/A',
+                            transaction.description ?? category?.name ?? 'T/A',
                           ),
-                          subtitle: Text(category?.name ?? 'Uncategorized'),
+                          subtitle: Text(category?.name ?? 'Tanpa Kategori'),
                           trailing: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             crossAxisAlignment: CrossAxisAlignment.end,
@@ -186,11 +192,11 @@ class HomeScreen extends ConsumerWidget {
                   },
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => Text('Error loading categories: $err'),
+                  error: (err, stack) => Text('Gagal memuat kategori: $err'),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) => Center(child: Text('Error: $err')),
+              error: (err, stack) => Center(child: Text('Terjadi kesalahan: $err')),
             ),
           ),
         ],

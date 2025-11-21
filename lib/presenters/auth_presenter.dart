@@ -28,11 +28,11 @@ class AuthPresenter {
           .authorizationForScopes(<String>['email']);
 
       if (authorization == null) {
-        throw Exception('No authorization found');
+        throw Exception('Otorisasi tidak ditemukan');
       }
 
       if (idToken == null) {
-        throw Exception('No ID Token found');
+        throw Exception('ID Token tidak ditemukan');
       }
 
       await Supabase.instance.client.auth.signInWithIdToken(
@@ -41,11 +41,11 @@ class AuthPresenter {
         accessToken: authorization.accessToken,
       );
     } on AuthException catch (e) {
-      _showError('Google Sign-In failed: ${e.message}');
+      _showError('Gagal masuk dengan Google: ${e.message}');
     } on Exception catch (e) {
       _showError(e.toString());
     } catch (e) {
-      _showError('An unexpected error occurred: $e');
+      _showError('Terjadi kesalahan tak terduga: $e');
     } finally {
       _setLoading(false);
     }

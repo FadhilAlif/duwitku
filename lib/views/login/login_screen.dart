@@ -66,7 +66,7 @@ class _LoginScreenState extends State<LoginScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('An unexpected error occurred'),
+            content: const Text('Terjadi kesalahan tak terduga'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -123,7 +123,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    hintText: 'your@email.com',
+                    hintText: 'anda@email.com',
                     prefixIcon: Icon(
                       Icons.email_outlined,
                       color: colorScheme.onSurfaceVariant,
@@ -156,12 +156,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email!';
+                      return 'Silakan masukkan email Anda!';
                     }
                     if (!RegExp(
                       r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                     ).hasMatch(value)) {
-                      return 'Please enter a valid email';
+                      return 'Silakan masukkan email yang valid';
                     }
                     return null;
                   },
@@ -174,7 +174,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   enabled: !_loading,
                   style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: 'Kata Sandi',
                     hintText: '••••••••',
                     prefixIcon: Icon(
                       Icons.lock_outlined,
@@ -208,10 +208,10 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password!';
+                      return 'Silakan masukkan kata sandi Anda!';
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return 'Kata sandi minimal 6 karakter';
                     }
                     return null;
                   },
@@ -239,7 +239,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                         )
                       : const Text(
-                          'Login',
+                          'Masuk',
                           style: TextStyle(
                             fontSize: 16,
                             fontWeight: FontWeight.bold,

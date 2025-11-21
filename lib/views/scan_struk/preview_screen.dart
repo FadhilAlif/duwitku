@@ -13,7 +13,7 @@ class PreviewScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.black,
         foregroundColor: Colors.white,
-        title: const Text('Preview'),
+        title: const Text('Pratinjau'),
         actions: [
           IconButton(
             icon: const Icon(Icons.check),

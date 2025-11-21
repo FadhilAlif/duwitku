@@ -39,7 +39,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
-                'Registration successful! Please check your email for verification.',
+                'Pendaftaran berhasil! Silakan periksa email Anda untuk verifikasi.',
               ),
             ),
           );
@@ -57,7 +57,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (!mounted) return;
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: const Text('An unexpected error occurred'),
+            content: const Text('Terjadi kesalahan tak terduga'),
             backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
@@ -114,7 +114,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
                     labelText: 'Email',
-                    hintText: 'your@email.com',
+                    hintText: 'anda@email.com',
                     prefixIcon: Icon(
                       Icons.email_outlined,
                       color: colorScheme.onSurfaceVariant,
@@ -147,12 +147,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your email';
+                      return 'Silakan masukkan email Anda';
                     }
                     if (!RegExp(
                       r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
                     ).hasMatch(value)) {
-                      return 'Please enter a valid email';
+                      return 'Silakan masukkan email yang valid';
                     }
                     return null;
                   },
@@ -165,7 +165,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   enabled: !_loading,
                   style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
-                    labelText: 'Password',
+                    labelText: 'Kata Sandi',
                     hintText: '••••••••',
                     prefixIcon: Icon(
                       Icons.lock_outlined,
@@ -199,10 +199,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return 'Silakan masukkan kata sandi Anda';
                     }
                     if (value.length < 6) {
-                      return 'Password must be at least 6 characters';
+                      return 'Kata sandi minimal 6 karakter';
                     }
                     return null;
                   },
@@ -215,7 +215,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   enabled: !_loading,
                   style: TextStyle(color: colorScheme.onSurface),
                   decoration: InputDecoration(
-                    labelText: 'Confirm Password',
+                    labelText: 'Konfirmasi Kata Sandi',
                     hintText: '••••••••',
                     prefixIcon: Icon(
                       Icons.lock_outlined,
@@ -249,10 +249,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please confirm your password';
+                      return 'Silakan konfirmasi kata sandi Anda';
                     }
                     if (value != _passwordController.text) {
-                      return 'Passwords do not match';
+                      return 'Kata sandi tidak cocok';
                     }
                     return null;
                   },

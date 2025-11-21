@@ -48,9 +48,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedCategory == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please select a category')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Silakan pilih kategori')));
         return;
       }
 
@@ -82,7 +82,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Add Transaction')),
+      appBar: AppBar(title: const Text('Tambah Transaksi')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -95,13 +95,13 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                 keyboardType: const TextInputType.numberWithOptions(
                   decimal: true,
                 ),
-                decoration: const InputDecoration(labelText: 'Amount'),
+                decoration: const InputDecoration(labelText: 'Jumlah'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
-                    return 'Please enter an amount';
+                    return 'Silakan masukkan jumlah';
                   }
                   if (double.tryParse(value) == null) {
-                    return 'Please enter a valid number';
+                    return 'Silakan masukkan nomor yang valid';
                   }
                   return null;
                 },
@@ -109,19 +109,19 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               const SizedBox(height: 16),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: const InputDecoration(labelText: 'Deskripsi'),
               ),
               const SizedBox(height: 16),
               Row(
                 children: [
                   Expanded(
                     child: Text(
-                      'Date: ${DateFormat.yMd().format(_selectedDate)}',
+                      'Tanggal: ${DateFormat.yMd().format(_selectedDate)}',
                     ),
                   ),
                   TextButton(
                     onPressed: () => _selectDate(context),
-                    child: const Text('Select Date'),
+                    child: const Text('Pilih Tanggal'),
                   ),
                 ],
               ),
@@ -135,7 +135,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
 
                   return DropdownButtonFormField<Category>(
                     initialValue: _selectedCategory,
-                    decoration: const InputDecoration(labelText: 'Category'),
+                    decoration: const InputDecoration(labelText: 'Kategori'),
                     items: filteredCategories.map((Category category) {
                       return DropdownMenuItem<Category>(
                         value: category,
@@ -148,22 +148,23 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                       });
                     },
                     validator: (value) =>
-                        value == null ? 'Please select a category' : null,
+                        value == null ? 'Silakan pilih kategori' : null,
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) => const Text('Could not load categories'),
+                error: (err, stack) =>
+                    const Text('Tidak dapat memuat kategori'),
               ),
               const SizedBox(height: 16),
               SegmentedButton<t.TransactionType>(
                 segments: const [
                   ButtonSegment(
                     value: t.TransactionType.expense,
-                    label: Text('Expense'),
+                    label: Text('Pengeluaran'),
                   ),
                   ButtonSegment(
                     value: t.TransactionType.income,
-                    label: Text('Income'),
+                    label: Text('Pemasukan'),
                   ),
                 ],
                 selected: {_transactionType},
@@ -179,7 +180,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _submit,
-                  child: const Text('Save Transaction'),
+                  child: const Text('Simpan Transaksi'),
                 ),
               ),
             ],

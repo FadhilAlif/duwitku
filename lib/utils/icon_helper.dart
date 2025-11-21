@@ -113,7 +113,7 @@ class IconHelper {
   /// Get all available icons grouped by category
   static Map<String, List<MapEntry<String, IconData>>> getIconsByCategory() {
     return {
-      'Finance': _iconMap.entries
+      'Keuangan': _iconMap.entries
           .where(
             (e) => [
               'attach_money',
@@ -130,7 +130,7 @@ class IconHelper {
             ].contains(e.key),
           )
           .toList(),
-      'Shopping & Food': _iconMap.entries
+      'Belanja & Makanan': _iconMap.entries
           .where(
             (e) => [
               'shopping_cart',
@@ -145,7 +145,7 @@ class IconHelper {
             ].contains(e.key),
           )
           .toList(),
-      'Transportation': _iconMap.entries
+      'Transportasi': _iconMap.entries
           .where(
             (e) => [
               'directions_car',
@@ -158,7 +158,7 @@ class IconHelper {
             ].contains(e.key),
           )
           .toList(),
-      'Home & Utilities': _iconMap.entries
+      'Rumah & Utilitas': _iconMap.entries
           .where(
             (e) => [
               'home',
@@ -173,7 +173,7 @@ class IconHelper {
             ].contains(e.key),
           )
           .toList(),
-      'Health & Fitness': _iconMap.entries
+      'Kesehatan & Kebugaran': _iconMap.entries
           .where(
             (e) => [
               'local_hospital',
@@ -184,7 +184,7 @@ class IconHelper {
             ].contains(e.key),
           )
           .toList(),
-      'Entertainment': _iconMap.entries
+      'Hiburan': _iconMap.entries
           .where(
             (e) => [
               'movie',
@@ -196,7 +196,7 @@ class IconHelper {
             ].contains(e.key),
           )
           .toList(),
-      'Education': _iconMap.entries
+      'Pendidikan': _iconMap.entries
           .where(
             (e) => [
               'school',
@@ -206,15 +206,15 @@ class IconHelper {
             ].contains(e.key),
           )
           .toList(),
-      'Personal Care': _iconMap.entries
+      'Perawatan Pribadi': _iconMap.entries
           .where((e) => ['face', 'spa', 'content_cut'].contains(e.key))
           .toList(),
-      'Work': _iconMap.entries
+      'Pekerjaan': _iconMap.entries
           .where(
             (e) => ['business', 'business_center', 'laptop'].contains(e.key),
           )
           .toList(),
-      'Others': _iconMap.entries
+      'Lainnya': _iconMap.entries
           .where(
             (e) => [
               'pets',

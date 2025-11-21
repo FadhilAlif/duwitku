@@ -37,7 +37,7 @@ class AddTransactionScreen extends ConsumerWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                   SizedBox(width: 16),
-                  Text('Saving...'),
+                  Text('Menyimpan...'),
                 ],
               ),
               duration: Duration(seconds: 2),
@@ -68,8 +68,8 @@ class AddTransactionScreen extends ConsumerWidget {
             SnackBar(
               content: Text(
                 category == null
-                    ? 'Category created successfully'
-                    : 'Category updated successfully',
+                    ? 'Kategori berhasil dibuat'
+                    : 'Kategori berhasil diperbarui',
               ),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
@@ -81,7 +81,7 @@ class AddTransactionScreen extends ConsumerWidget {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${e.toString()}'),
+              content: Text('Terjadi kesalahan: ${e.toString()}'),
               backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
             ),
@@ -100,19 +100,19 @@ class AddTransactionScreen extends ConsumerWidget {
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete Category'),
+          title: const Text('Hapus Kategori'),
           content: Text(
-            'Are you sure you want to delete "${category.name}"?\nThis action cannot be undone.',
+            'Apakah Anda yakin ingin menghapus "${category.name}"?\nTindakan ini tidak dapat dibatalkan.',
           ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Cancel'),
+              child: const Text('Batal'),
             ),
             FilledButton(
               onPressed: () => Navigator.pop(dialogContext, true),
               style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Delete'),
+              child: const Text('Hapus'),
             ),
           ],
         );
@@ -134,7 +134,7 @@ class AddTransactionScreen extends ConsumerWidget {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
                   SizedBox(width: 16),
-                  Text('Deleting...'),
+                  Text('Menghapus...'),
                 ],
               ),
               duration: Duration(seconds: 2),
@@ -148,7 +148,7 @@ class AddTransactionScreen extends ConsumerWidget {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Category deleted successfully'),
+              content: Text('Kategori berhasil dihapus'),
               backgroundColor: Colors.green,
               behavior: SnackBarBehavior.floating,
             ),
@@ -159,7 +159,7 @@ class AddTransactionScreen extends ConsumerWidget {
           ScaffoldMessenger.of(context).hideCurrentSnackBar();
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${e.toString()}'),
+              content: Text('Terjadi kesalahan: ${e.toString()}'),
               backgroundColor: Colors.red,
               behavior: SnackBarBehavior.floating,
             ),
@@ -174,7 +174,7 @@ class AddTransactionScreen extends ConsumerWidget {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Manage Categories'), elevation: 0),
+      appBar: AppBar(title: const Text('Kelola Kategori'), elevation: 0),
       body: categoriesAsync.when(
         data: (categories) {
           if (categories.isEmpty) {
@@ -189,17 +189,17 @@ class AddTransactionScreen extends ConsumerWidget {
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'No categories found',
+                    'Tidak ada kategori',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: Colors.grey.shade600,
-                    ),
+                          color: Colors.grey.shade600,
+                        ),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Tap the + button to add one',
+                    'Tekan tombol + untuk menambahkan',
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey.shade500,
-                    ),
+                          color: Colors.grey.shade500,
+                        ),
                   ),
                 ],
               ),
@@ -224,11 +224,11 @@ class AddTransactionScreen extends ConsumerWidget {
                     vertical: 8.0,
                   ),
                   child: Text(
-                    'INCOME',
+                    'PEMASUKAN',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Colors.green,
-                      fontWeight: FontWeight.bold,
-                    ),
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ),
                 ...incomeCategories.map(
@@ -243,11 +243,11 @@ class AddTransactionScreen extends ConsumerWidget {
                     vertical: 8.0,
                   ),
                   child: Text(
-                    'EXPENSE',
+                    'PENGELUARAN',
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      color: Colors.red,
-                      fontWeight: FontWeight.bold,
-                    ),
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ),
                 ...expenseCategories.map(
@@ -265,7 +265,7 @@ class AddTransactionScreen extends ConsumerWidget {
               const Icon(Icons.error_outline, size: 64, color: Colors.red),
               const SizedBox(height: 16),
               Text(
-                'Error loading categories',
+                'Gagal memuat kategori',
                 style: Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: 8),
@@ -281,7 +281,7 @@ class AddTransactionScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCategoryDialog(context, ref),
         icon: const Icon(Icons.add),
-        label: const Text('Add Category'),
+        label: const Text('Tambah Kategori'),
       ),
     );
   }
@@ -323,7 +323,7 @@ class AddTransactionScreen extends ConsumerWidget {
                   borderRadius: BorderRadius.circular(4),
                 ),
                 child: Text(
-                  'DEFAULT',
+                  'BAWAAN',
                   style: TextStyle(
                     fontSize: 10,
                     color: Colors.blue.shade700,
@@ -344,7 +344,7 @@ class AddTransactionScreen extends ConsumerWidget {
         ),
         trailing: isDefault
             ? Tooltip(
-                message: 'Default categories cannot be edited or deleted',
+                message: 'Kategori bawaan tidak dapat diubah atau dihapus',
                 child: Icon(Icons.lock_outline, color: Colors.grey.shade400),
               )
             : Row(
@@ -354,12 +354,12 @@ class AddTransactionScreen extends ConsumerWidget {
                     icon: const Icon(Icons.edit_outlined),
                     onPressed: () =>
                         _showCategoryDialog(context, ref, category),
-                    tooltip: 'Edit',
+                    tooltip: 'Ubah',
                   ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, color: Colors.red),
                     onPressed: () => _deleteCategory(context, ref, category),
-                    tooltip: 'Delete',
+                    tooltip: 'Hapus',
                   ),
                 ],
               ),
@@ -400,7 +400,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.category == null ? 'Add Category' : 'Edit Category'),
+      title: Text(widget.category == null ? 'Tambah Kategori' : 'Ubah Kategori'),
       content: Form(
         key: _formKey,
         child: Column(
@@ -409,12 +409,12 @@ class _CategoryDialogState extends State<_CategoryDialog> {
             TextFormField(
               controller: _nameController,
               decoration: const InputDecoration(
-                labelText: 'Category Name',
+                labelText: 'Nama Kategori',
                 border: OutlineInputBorder(),
               ),
               validator: (value) {
                 if (value == null || value.trim().isEmpty) {
-                  return 'Please enter a category name';
+                  return 'Silakan masukkan nama kategori';
                 }
                 return null;
               },
@@ -424,7 +424,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
             DropdownButtonFormField<CategoryType>(
               initialValue: _selectedType,
               decoration: const InputDecoration(
-                labelText: 'Type',
+                labelText: 'Tipe',
                 border: OutlineInputBorder(),
               ),
               items: CategoryType.values.map((CategoryType value) {
@@ -454,7 +454,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text('Cancel'),
+          child: const Text('Batal'),
         ),
         FilledButton(
           onPressed: () {
@@ -465,7 +465,7 @@ class _CategoryDialogState extends State<_CategoryDialog> {
               });
             }
           },
-          child: const Text('Save'),
+          child: const Text('Simpan'),
         ),
       ],
     );

@@ -26,7 +26,8 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
   void _showAddTransactionModal(BuildContext context) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      // backgroundColor: Colors.white,
+      backgroundColor: const Color(0xFF14894e),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -35,13 +36,13 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
           children: <Widget>[
             const ListTile(
               title: Text(
-                'Add New Transaction',
+                'Tambah Transaksi Baru',
                 style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
               ),
             ),
             ListTile(
               leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('Scan Struk'),
+              title: const Text('Pindai Struk'),
               onTap: () {
                 Navigator.pop(context);
                 context.push('/scan_struk');
@@ -49,18 +50,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.edit_document),
-              title: const Text('Create Transaction'),
+              title: const Text('Buat Transaksi'),
               onTap: () {
                 Navigator.pop(context);
                 context.push('/transaction_form');
-              },
-            ),
-            ListTile(
-              leading: const Icon(Icons.category),
-              title: const Text('Manage Categories'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/manage_categories');
               },
             ),
             ListTile(
@@ -116,10 +109,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               tabBackgroundColor: const Color(0xFF14894e),
               color: Colors.black,
               tabs: const [
-                GButton(icon: Icons.home, text: 'Home'),
-                GButton(icon: Icons.receipt_long, text: 'Transaction'),
-                GButton(icon: Icons.account_balance_wallet, text: 'Budget'),
-                GButton(icon: Icons.person, text: 'Profile'),
+                GButton(icon: Icons.home, text: 'Beranda'),
+                GButton(icon: Icons.receipt_long, text: 'Transaksi'),
+                GButton(icon: Icons.account_balance_wallet, text: 'Anggaran'),
+                GButton(icon: Icons.person, text: 'Profil'),
               ],
               selectedIndex: _selectedIndex,
               onTabChange: (index) {

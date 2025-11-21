@@ -8,9 +8,9 @@ class ProfileHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final user = Supabase.instance.client.auth.currentUser;
-    final userEmail = user?.email ?? 'No Email';
+    final userEmail = user?.email ?? 'Tidak ada Email';
     final userAvatarUrl = user?.userMetadata?['avatar_url'];
-    final userName = user?.userMetadata?['name'] ?? 'No Name';
+    final userName = user?.userMetadata?['name'] ?? 'Tidak ada Nama';
 
     return Container(
       padding: const EdgeInsets.all(24.0),
