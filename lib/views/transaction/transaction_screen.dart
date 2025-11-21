@@ -2,7 +2,6 @@ import 'package:duwitku/models/category.dart';
 import 'package:duwitku/models/transaction.dart' as t;
 import 'package:duwitku/providers/category_provider.dart';
 import 'package:duwitku/providers/transaction_provider.dart';
-import 'package:duwitku/repositories/transaction_repository.dart';
 import 'package:duwitku/utils/icon_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -255,10 +254,43 @@ class _TransactionListItem extends ConsumerWidget {
       endActionPane: ActionPane(
         motion: const DrawerMotion(),
         dismissible: DismissiblePane(
+          confirmDismiss: () async {
+            // Show confirmation dialog
+            final confirm = await showDialog<bool>(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Hapus Transaksi'),
+                content: const Text(
+                  'Apakah Anda yakin ingin menghapus transaksi ini?',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Batal'),
+                  ),
+                  FilledButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    child: const Text('Hapus'),
+                  ),
+                ],
+              ),
+            );
+            return confirm ?? false;
+          },
           onDismissed: () async {
-            await ref
-                .read(transactionRepositoryProvider)
-                .deleteTransaction(transaction.id);
+            try {
+              await ref
+                  .read(transactionRepositoryProvider)
+                  .deleteTransaction(transaction.id);
+
+              // Wait a bit before invalidating to let animation complete
+              await Future.delayed(const Duration(milliseconds: 300));
+
+              // Force refresh the stream
+              ref.invalidate(filteredTransactionsStreamProvider);
+            } catch (e) {
+              // Error will be shown in the action button
+            }
           },
         ),
         children: [
@@ -286,20 +318,52 @@ class _TransactionListItem extends ConsumerWidget {
 
               if (confirm == true) {
                 try {
+                  // Show loading indicator
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Row(
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  Colors.white,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 16),
+                            Text('Menghapus transaksi...'),
+                          ],
+                        ),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                  }
+
+                  // Delete from database
                   await ref
                       .read(transactionRepositoryProvider)
                       .deleteTransaction(transaction.id);
 
+                  // Force refresh the stream
+                  ref.invalidate(filteredTransactionsStreamProvider);
+
                   if (context.mounted) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Transaksi berhasil dihapus'),
                         duration: Duration(seconds: 2),
+                        backgroundColor: Colors.green,
                       ),
                     );
                   }
                 } catch (e) {
                   if (context.mounted) {
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         content: Text('Gagal menghapus transaksi: $e'),

@@ -497,7 +497,7 @@ class _BudgetDialogState extends ConsumerState<_BudgetDialog> {
                       : null;
 
                   return DropdownButtonFormField<int>(
-                    value: validSelectedId,
+                    initialValue: validSelectedId,
                     hint: const Text('Pilih Kategori'),
                     isExpanded: true,
                     items: availableCategories.map((Category category) {
