@@ -4,8 +4,8 @@ import 'package:duwitku/utils/icon_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class AddTransactionScreen extends ConsumerWidget {
-  const AddTransactionScreen({super.key});
+class ManageCategoriesScreen extends ConsumerWidget {
+  const ManageCategoriesScreen({super.key});
 
   Future<void> _showCategoryDialog(
     BuildContext context,

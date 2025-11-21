@@ -1,5 +1,5 @@
 import 'package:duwitku/utils/go_router_refresh_stream.dart';
-import 'package:duwitku/views/add_transaction/add_transaction_screen.dart';
+import 'package:duwitku/views/manage_categories/manage_categories_screen.dart';
 import 'package:duwitku/views/chat_prompt/chat_prompt_screen.dart';
 import 'package:duwitku/views/edit_profile/edit_profile_screen.dart';
 import 'package:duwitku/views/login/login_screen.dart';
@@ -34,7 +34,7 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/manage_categories',
-      builder: (context, state) => const AddTransactionScreen(),
+      builder: (context, state) => const ManageCategoriesScreen(),
     ),
     GoRoute(
       path: '/scan_struk',

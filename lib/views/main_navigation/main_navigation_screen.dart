@@ -41,19 +41,19 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
               ),
             ),
             ListTile(
-              leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('Pindai Struk'),
-              onTap: () {
-                Navigator.pop(context);
-                context.push('/scan_struk');
-              },
-            ),
-            ListTile(
               leading: const Icon(Icons.edit_document),
               title: const Text('Buat Transaksi'),
               onTap: () {
                 Navigator.pop(context);
                 context.push('/transaction_form');
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Pindai Struk'),
+              onTap: () {
+                Navigator.pop(context);
+                context.push('/scan_struk');
               },
             ),
             ListTile(
