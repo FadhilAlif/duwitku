@@ -9,7 +9,8 @@ import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 class TransactionFormScreen extends ConsumerStatefulWidget {
-  const TransactionFormScreen({super.key});
+  final t.Transaction? transaction;
+  const TransactionFormScreen({super.key, this.transaction});
 
   @override
   ConsumerState<TransactionFormScreen> createState() =>
@@ -18,11 +19,26 @@ class TransactionFormScreen extends ConsumerStatefulWidget {
 
 class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _amountController = TextEditingController();
-  final _descriptionController = TextEditingController();
+  late TextEditingController _amountController;
+  late TextEditingController _descriptionController;
   DateTime _selectedDate = DateTime.now();
   Category? _selectedCategory;
   t.TransactionType _transactionType = t.TransactionType.expense;
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController =
+        TextEditingController(text: widget.transaction?.amount.toString() ?? '');
+    _descriptionController =
+        TextEditingController(text: widget.transaction?.description ?? '');
+    if (widget.transaction != null) {
+      final trx = widget.transaction!;
+      _selectedDate = trx.transactionDate;
+      _transactionType = trx.type;
+      // _selectedCategory will be set in the build method once categories are loaded.
+    }
+  }
 
   @override
   void dispose() {
@@ -48,9 +64,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   Future<void> _submit() async {
     if (_formKey.currentState!.validate()) {
       if (_selectedCategory == null) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Silakan pilih kategori')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Silakan pilih kategori')),
+        );
         return;
       }
 
@@ -58,21 +74,43 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       final description = _descriptionController.text;
       final repo = ref.read(transactionRepositoryProvider);
 
-      final newTransaction = t.Transaction(
-        id: const Uuid().v4(), // Client-side generated UUID
-        userId: '', // Will be replaced by repository
-        categoryId: _selectedCategory!.id,
-        amount: amount,
-        transactionDate: _selectedDate,
-        type: _transactionType,
-        description: description,
-        sourceType: t.SourceType.app,
-      );
+      try {
+        if (widget.transaction == null) {
+          final newTransaction = t.Transaction(
+            id: const Uuid().v4(),
+            userId: '',
+            categoryId: _selectedCategory!.id,
+            amount: amount,
+            transactionDate: _selectedDate,
+            type: _transactionType,
+            description: description,
+            sourceType: t.SourceType.app,
+          );
+          await repo.addTransaction(newTransaction);
+        } else {
+          final updatedTransaction = t.Transaction(
+            id: widget.transaction!.id,
+            userId: widget.transaction!.userId,
+            categoryId: _selectedCategory!.id,
+            amount: amount,
+            transactionDate: _selectedDate,
+            type: _transactionType,
+            description: description,
+            sourceType: widget.transaction!.sourceType,
+            receiptImageUrl: widget.transaction!.receiptImageUrl,
+          );
+          await repo.updateTransaction(updatedTransaction);
+        }
 
-      await repo.addTransaction(newTransaction);
-
-      if (mounted) {
-        context.pop();
+        if (mounted) {
+          context.pop();
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Gagal menyimpan transaksi: ${e.toString()}')),
+          );
+        }
       }
     }
   }
@@ -82,7 +120,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Tambah Transaksi')),
+      appBar: AppBar(title: Text(widget.transaction == null ? 'Tambah Transaksi' : 'Ubah Transaksi')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -92,9 +130,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
             children: [
               TextFormField(
                 controller: _amountController,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
+                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                 decoration: const InputDecoration(labelText: 'Jumlah'),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -115,9 +151,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: Text(
-                      'Tanggal: ${DateFormat.yMd().format(_selectedDate)}',
-                    ),
+                    child: Text('Tanggal: ${DateFormat.yMd().format(_selectedDate)}'),
                   ),
                   TextButton(
                     onPressed: () => _selectDate(context),
@@ -128,10 +162,20 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
               const SizedBox(height: 16),
               categoriesAsync.when(
                 data: (categories) {
-                  // Filter categories based on transaction type
                   final filteredCategories = categories
                       .where((cat) => cat.type.name == _transactionType.name)
                       .toList();
+                  
+                  if (widget.transaction != null && _selectedCategory == null) {
+                    try {
+                      _selectedCategory = categories.firstWhere((cat) => cat.id == widget.transaction!.categoryId);
+                    } catch (e) {
+                      _selectedCategory = filteredCategories.isNotEmpty ? filteredCategories.first : null;
+                    }
+                  }
+                  if (_selectedCategory != null && _selectedCategory!.type.name != _transactionType.name) {
+                    _selectedCategory = filteredCategories.isNotEmpty ? filteredCategories.first : null;
+                  }
 
                   return DropdownButtonFormField<Category>(
                     initialValue: _selectedCategory,
@@ -147,31 +191,23 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                         _selectedCategory = newValue;
                       });
                     },
-                    validator: (value) =>
-                        value == null ? 'Silakan pilih kategori' : null,
+                    validator: (value) => value == null ? 'Silakan pilih kategori' : null,
                   );
                 },
                 loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) =>
-                    const Text('Tidak dapat memuat kategori'),
+                error: (err, stack) => const Text('Tidak dapat memuat kategori'),
               ),
               const SizedBox(height: 16),
               SegmentedButton<t.TransactionType>(
                 segments: const [
-                  ButtonSegment(
-                    value: t.TransactionType.expense,
-                    label: Text('Pengeluaran'),
-                  ),
-                  ButtonSegment(
-                    value: t.TransactionType.income,
-                    label: Text('Pemasukan'),
-                  ),
+                  ButtonSegment(value: t.TransactionType.expense, label: Text('Pengeluaran')),
+                  ButtonSegment(value: t.TransactionType.income, label: Text('Pemasukan')),
                 ],
                 selected: {_transactionType},
                 onSelectionChanged: (Set<t.TransactionType> newSelection) {
                   setState(() {
                     _transactionType = newSelection.first;
-                    _selectedCategory = null;
+                    _selectedCategory = null; 
                   });
                 },
               ),
@@ -180,7 +216,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                 width: double.infinity,
                 child: FilledButton(
                   onPressed: _submit,
-                  child: const Text('Simpan Transaksi'),
+                  child: Text(widget.transaction == null ? 'Simpan Transaksi' : 'Perbarui Transaksi'),
                 ),
               ),
             ],

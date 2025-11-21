@@ -64,7 +64,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 context.push('/chat_prompt');
               },
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
           ],
         );
       },
@@ -84,7 +84,7 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color.fromARGB(255, 29, 105, 67),
           boxShadow: [
             BoxShadow(
               blurRadius: 20,

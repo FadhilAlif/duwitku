@@ -10,6 +10,7 @@ import 'package:duwitku/views/splash/splash_screen.dart';
 import 'package:duwitku/views/transaction_form/transaction_form_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:duwitku/models/transaction.dart' as t;
 
 final router = GoRouter(
   refreshListenable:
@@ -45,7 +46,10 @@ final router = GoRouter(
     ),
     GoRoute(
       path: '/transaction_form',
-      builder: (context, state) => const TransactionFormScreen(),
+      builder: (context, state) {
+        final transaction = state.extra as t.Transaction?;
+        return TransactionFormScreen(transaction: transaction);
+      },
     ),
     GoRoute(
       path: '/edit_profile',

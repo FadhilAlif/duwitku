@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flex_color_scheme/flex_color_scheme.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -13,6 +14,9 @@ void main() async {
   final anonKey = dotenv.env['SUPABASE_ANON_KEY'];
 
   await Supabase.initialize(url: url!, anonKey: anonKey!);
+
+  // Initialize locale data for Indonesian
+  await initializeDateFormatting('id_ID', null);
 
   runApp(const ProviderScope(child: MainApp()));
 }
