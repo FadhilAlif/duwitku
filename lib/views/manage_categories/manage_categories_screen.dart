@@ -7,88 +7,20 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 class ManageCategoriesScreen extends ConsumerWidget {
   const ManageCategoriesScreen({super.key});
 
-  Future<void> _showCategoryDialog(
-    BuildContext context,
-    WidgetRef ref, [
-    Category? category,
-  ]) async {
-    final result = await showDialog<Map<String, dynamic>?>(
+  void _showCategoryModal(BuildContext context, [Category? category]) {
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) => _CategoryDialog(category: category),
+      isScrollControlled: true,
+      builder: (ctx) => Padding(
+        padding: EdgeInsets.only(
+          bottom: MediaQuery.of(ctx).viewInsets.bottom,
+          top: 16,
+          left: 16,
+          right: 16,
+        ),
+        child: _CategoryForm(category: category),
+      ),
     );
-
-    if (result != null && context.mounted) {
-      final name = result['name'] as String;
-      final type = result['type'] as CategoryType;
-
-      try {
-        final repo = ref.read(categoryRepositoryProvider);
-
-        // Show loading indicator
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  SizedBox(width: 16),
-                  Text('Menyimpan...'),
-                ],
-              ),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-
-        if (category == null) {
-          // Create new category
-          await repo.createCategory(Category(id: 0, name: name, type: type));
-        } else {
-          // Update existing category
-          await repo.updateCategory(
-            Category(
-              id: category.id,
-              name: name,
-              type: type,
-              userId: category.userId,
-              isDefault: category.isDefault,
-              iconName: category.iconName,
-            ),
-          );
-        }
-
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                category == null
-                    ? 'Kategori berhasil dibuat'
-                    : 'Kategori berhasil diperbarui',
-              ),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Terjadi kesalahan: ${e.toString()}'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
-    }
   }
 
   Future<void> _deleteCategory(
@@ -96,76 +28,45 @@ class ManageCategoriesScreen extends ConsumerWidget {
     WidgetRef ref,
     Category category,
   ) async {
+    final messenger = ScaffoldMessenger.of(context);
     final confirmed = await showDialog<bool>(
       context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Hapus Kategori'),
-          content: Text(
-            'Apakah Anda yakin ingin menghapus "${category.name}"?\nTindakan ini tidak dapat dibatalkan.',
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('Hapus Kategori'),
+        content: Text(
+          'Apakah Anda yakin ingin menghapus "${category.name}"?\nTindakan ini tidak dapat dibatalkan.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext, false),
+            child: const Text('Batal'),
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text('Batal'),
-            ),
-            FilledButton(
-              onPressed: () => Navigator.pop(dialogContext, true),
-              style: FilledButton.styleFrom(backgroundColor: Colors.red),
-              child: const Text('Hapus'),
-            ),
-          ],
-        );
-      },
+          FilledButton(
+            onPressed: () => Navigator.pop(dialogContext, true),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Hapus'),
+          ),
+        ],
+      ),
     );
 
-    if (confirmed == true && context.mounted) {
-      try {
-        final repo = ref.read(categoryRepositoryProvider);
+    if (confirmed != true) return;
 
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Row(
-                children: [
-                  SizedBox(
-                    width: 20,
-                    height: 20,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  ),
-                  SizedBox(width: 16),
-                  Text('Menghapus...'),
-                ],
-              ),
-              duration: Duration(seconds: 2),
-            ),
-          );
-        }
-
-        await repo.deleteCategory(category.id);
-
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Kategori berhasil dihapus'),
-              backgroundColor: Colors.green,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      } catch (e) {
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).hideCurrentSnackBar();
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Terjadi kesalahan: ${e.toString()}'),
-              backgroundColor: Colors.red,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
-      }
+    try {
+      await ref.read(categoryRepositoryProvider).deleteCategory(category.id);
+      messenger.showSnackBar(
+        const SnackBar(
+          content: Text('Kategori berhasil dihapus'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      messenger.showSnackBar(
+        SnackBar(
+          content: Text('Gagal menghapus: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -190,99 +91,79 @@ class ManageCategoriesScreen extends ConsumerWidget {
                   const SizedBox(height: 16),
                   Text(
                     'Tidak ada kategori',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: Colors.grey.shade600,
-                        ),
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
-                  Text(
-                    'Tekan tombol + untuk menambahkan',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey.shade500,
-                        ),
-                  ),
+                  const Text('Tekan tombol + untuk menambahkan'),
                 ],
               ),
             );
           }
-
-          // Separate categories by type
           final incomeCategories = categories
-              .where((cat) => cat.type == CategoryType.income)
+              .where((c) => c.type == CategoryType.income)
               .toList();
           final expenseCategories = categories
-              .where((cat) => cat.type == CategoryType.expense)
+              .where((c) => c.type == CategoryType.expense)
               .toList();
-
           return ListView(
             padding: const EdgeInsets.all(8.0),
             children: [
-              if (incomeCategories.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
-                  ),
-                  child: Text(
-                    'PEMASUKAN',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: Colors.green,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
+              if (incomeCategories.isNotEmpty)
+                _buildCategorySection(
+                  context,
+                  ref,
+                  'PEMASUKAN',
+                  incomeCategories,
+                  Colors.green,
                 ),
-                ...incomeCategories.map(
-                  (category) => _buildCategoryTile(context, ref, category),
+              if (expenseCategories.isNotEmpty)
+                _buildCategorySection(
+                  context,
+                  ref,
+                  'PENGELUARAN',
+                  expenseCategories,
+                  Colors.red,
                 ),
-                const SizedBox(height: 16),
-              ],
-              if (expenseCategories.isNotEmpty) ...[
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
-                  ),
-                  child: Text(
-                    'PENGELUARAN',
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: Colors.red,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                ),
-                ...expenseCategories.map(
-                  (category) => _buildCategoryTile(context, ref, category),
-                ),
-              ],
             ],
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Icons.error_outline, size: 64, color: Colors.red),
-              const SizedBox(height: 16),
-              Text(
-                'Gagal memuat kategori',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                err.toString(),
-                style: Theme.of(context).textTheme.bodyMedium,
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
-        ),
+        error: (err, stack) =>
+            Center(child: Text('Gagal memuat kategori: ${err.toString()}')),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => _showCategoryDialog(context, ref),
+        onPressed: () => _showCategoryModal(context),
         icon: const Icon(Icons.add),
         label: const Text('Tambah Kategori'),
       ),
+    );
+  }
+
+  Widget _buildCategorySection(
+    BuildContext context,
+    WidgetRef ref,
+    String title,
+    List<Category> categories,
+    Color color,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: color,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+        ...categories.map(
+          (category) => _buildCategoryTile(context, ref, category),
+        ),
+        const SizedBox(height: 16),
+      ],
     );
   }
 
@@ -292,14 +173,13 @@ class ManageCategoriesScreen extends ConsumerWidget {
     Category category,
   ) {
     final isDefault = category.isDefault;
-
     return Card(
       margin: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 4.0),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: category.type == CategoryType.income
-              ? Colors.green.shade100
-              : Colors.red.shade100,
+          backgroundColor:
+              (category.type == CategoryType.income ? Colors.green : Colors.red)
+                  .withAlpha(26),
           child: Icon(
             IconHelper.getIcon(category.iconName),
             color: category.type == CategoryType.income
@@ -307,53 +187,19 @@ class ManageCategoriesScreen extends ConsumerWidget {
                 : Colors.red,
           ),
         ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                category.name,
-                style: const TextStyle(fontWeight: FontWeight.w500),
-              ),
-            ),
-            if (isDefault)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: Colors.blue.shade100,
-                  borderRadius: BorderRadius.circular(4),
-                ),
-                child: Text(
-                  'BAWAAN',
-                  style: TextStyle(
-                    fontSize: 10,
-                    color: Colors.blue.shade700,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-          ],
+        title: Text(
+          category.name,
+          style: const TextStyle(fontWeight: FontWeight.w500),
         ),
-        subtitle: Text(
-          category.type.name.toUpperCase(),
-          style: TextStyle(
-            fontSize: 12,
-            color: category.type == CategoryType.income
-                ? Colors.green
-                : Colors.red,
-          ),
-        ),
+        subtitle: isDefault ? const Text('Kategori Bawaan') : null,
         trailing: isDefault
-            ? Tooltip(
-                message: 'Kategori bawaan tidak dapat diubah atau dihapus',
-                child: Icon(Icons.lock_outline, color: Colors.grey.shade400),
-              )
+            ? null
             : Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   IconButton(
                     icon: const Icon(Icons.edit_outlined),
-                    onPressed: () =>
-                        _showCategoryDialog(context, ref, category),
+                    onPressed: () => _showCategoryModal(context, category),
                     tooltip: 'Ubah',
                   ),
                   IconButton(
@@ -368,26 +214,26 @@ class ManageCategoriesScreen extends ConsumerWidget {
   }
 }
 
-// Separate dialog widget to prevent setState issues
-class _CategoryDialog extends StatefulWidget {
+// Separate form widget for the bottom sheet
+class _CategoryForm extends ConsumerStatefulWidget {
   final Category? category;
-
-  const _CategoryDialog({this.category});
+  const _CategoryForm({this.category});
 
   @override
-  State<_CategoryDialog> createState() => _CategoryDialogState();
+  ConsumerState<_CategoryForm> createState() => _CategoryFormState();
 }
 
-class _CategoryDialogState extends State<_CategoryDialog> {
-  late final TextEditingController _nameController;
-  late final GlobalKey<FormState> _formKey;
+class _CategoryFormState extends ConsumerState<_CategoryForm> {
+  final _formKey = GlobalKey<FormState>();
+  late TextEditingController _nameController;
   late CategoryType _selectedType;
+  bool _isEditMode = false;
 
   @override
   void initState() {
     super.initState();
+    _isEditMode = widget.category != null;
     _nameController = TextEditingController(text: widget.category?.name ?? '');
-    _formKey = GlobalKey<FormState>();
     _selectedType = widget.category?.type ?? CategoryType.expense;
   }
 
@@ -397,75 +243,115 @@ class _CategoryDialogState extends State<_CategoryDialog> {
     super.dispose();
   }
 
+  Future<void> _submit() async {
+    if (_formKey.currentState!.validate()) {
+      final repo = ref.read(categoryRepositoryProvider);
+      final navigator = Navigator.of(context);
+      final messenger = ScaffoldMessenger.of(context);
+
+      try {
+        if (_isEditMode) {
+          await repo.updateCategory(
+            Category(
+              id: widget.category!.id,
+              name: _nameController.text,
+              type: _selectedType,
+              userId: widget.category!.userId,
+              isDefault: widget.category!.isDefault,
+              iconName: widget.category!.iconName,
+            ),
+          );
+        } else {
+          await repo.createCategory(
+            Category(id: 0, name: _nameController.text, type: _selectedType),
+          );
+        }
+        navigator.pop();
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text(
+              'Kategori berhasil ${_isEditMode ? 'diperbarui' : 'disimpan'}',
+            ),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } catch (e) {
+        messenger.showSnackBar(
+          SnackBar(
+            content: Text('Gagal: ${e.toString()}'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    return AlertDialog(
-      title: Text(widget.category == null ? 'Tambah Kategori' : 'Ubah Kategori'),
-      content: Form(
-        key: _formKey,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextFormField(
-              controller: _nameController,
-              decoration: const InputDecoration(
-                labelText: 'Nama Kategori',
-                border: OutlineInputBorder(),
+    return Wrap(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                _isEditMode ? 'Ubah Kategori' : 'Kategori Baru',
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Silakan masukkan nama kategori';
-                }
-                return null;
-              },
-              autofocus: true,
-            ),
-            const SizedBox(height: 16),
-            DropdownButtonFormField<CategoryType>(
-              initialValue: _selectedType,
-              decoration: const InputDecoration(
-                labelText: 'Tipe',
-                border: OutlineInputBorder(),
-              ),
-              items: CategoryType.values.map((CategoryType value) {
-                return DropdownMenuItem<CategoryType>(
-                  value: value,
-                  child: Text(
-                    value.name.toUpperCase(),
-                    style: TextStyle(
-                      color: value == CategoryType.income
-                          ? Colors.green
-                          : Colors.red,
+              const SizedBox(height: 24),
+              Form(
+                key: _formKey,
+                child: Column(
+                  children: [
+                    TextFormField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: 'Nama Kategori',
+                        border: OutlineInputBorder(),
+                      ),
+                      validator: (value) =>
+                          (value == null || value.trim().isEmpty)
+                          ? 'Nama tidak boleh kosong'
+                          : null,
+                      autofocus: true,
                     ),
+                    const SizedBox(height: 16),
+                    DropdownButtonFormField<CategoryType>(
+                      initialValue: _selectedType,
+                      decoration: const InputDecoration(
+                        labelText: 'Tipe',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: CategoryType.values
+                          .map(
+                            (type) => DropdownMenuItem(
+                              value: type,
+                              child: Text(type.name.toUpperCase()),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (type) =>
+                          setState(() => _selectedType = type!),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              Row(
+                children: [
+                  const Spacer(),
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('Batal'),
                   ),
-                );
-              }).toList(),
-              onChanged: (CategoryType? newValue) {
-                if (newValue != null && mounted) {
-                  setState(() {
-                    _selectedType = newValue;
-                  });
-                }
-              },
-            ),
-          ],
-        ),
-      ),
-      actions: [
-        TextButton(
-          onPressed: () => Navigator.pop(context),
-          child: const Text('Batal'),
-        ),
-        FilledButton(
-          onPressed: () {
-            if (_formKey.currentState?.validate() ?? false) {
-              Navigator.pop(context, {
-                'name': _nameController.text.trim(),
-                'type': _selectedType,
-              });
-            }
-          },
-          child: const Text('Simpan'),
+                  const SizedBox(width: 8),
+                  FilledButton(onPressed: _submit, child: const Text('Simpan')),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );
