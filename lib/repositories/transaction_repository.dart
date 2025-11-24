@@ -43,6 +43,21 @@ class TransactionRepository {
     await _client.from('transactions').insert(data);
   }
 
+  Future<void> addTransactions(List<Transaction> transactions) async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw Exception('Pengguna tidak terautentikasi');
+    }
+
+    final data = transactions.map((t) {
+      final json = t.toJson();
+      json['user_id'] = userId;
+      return json;
+    }).toList();
+
+    await _client.from('transactions').insert(data);
+  }
+
   Future<void> updateTransaction(Transaction transaction) async {
     await _client
         .from('transactions')

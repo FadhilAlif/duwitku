@@ -10,6 +10,21 @@ enum SourceType {
   initial,
 }
 
+extension SourceTypeExtension on SourceType {
+  String get toSnakeCase {
+    switch (this) {
+      case SourceType.app:
+        return 'app';
+      case SourceType.receiptScan:
+        return 'receipt_scan';
+      case SourceType.chatPrompt:
+        return 'chat_prompt';
+      case SourceType.initial:
+        return 'initial';
+    }
+  }
+}
+
 extension StringExtension on String {
   TransactionType get toTransactionType {
     switch (this) {
@@ -69,7 +84,7 @@ class Transaction {
       'transaction_date': transactionDate.toIso8601String(),
       'type': type.name,
       'description': description,
-      'source_type': sourceType.name,
+      'source_type': sourceType.toSnakeCase,
       'receipt_image_url': receiptImageUrl,
     };
   }
