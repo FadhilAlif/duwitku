@@ -45,12 +45,23 @@ class ReceiptService {
     final apiKey = dotenv.env['GEMINI_API_KEY'];
     if (apiKey == null) throw Exception('GEMINI_API_KEY not found');
 
-    const prompt = '''
+    // 1. Fetch Categories
+    final categories = await _fetchCategories();
+    final categoriesString = categories
+        .map((c) => "${c['id']}:${c['name']} (${c['type']})")
+        .join(', ');
+
+    final prompt = '''
       Analyze this receipt image and extract the transaction items.
+      
+      Available Categories (ID:Name):
+      $categoriesString
+      
       Return a JSON array where each object has:
       - "description": string (item name)
       - "amount": number (price/cost)
-      - "type": string ("expense" or "income" - usually expense for receipts)
+      - "type": string ("expense" or "income")
+      - "category_id": integer (Select the most appropriate ID from the available categories based on the item description. If unsure, pick the most generic one.)
     ''';
 
     try {
@@ -83,9 +94,10 @@ class ReceiptService {
                 "properties": {
                   "description": {"type": "STRING"},
                   "amount": {"type": "NUMBER"},
-                  "type": {"type": "STRING", "enum": ["expense", "income"]}
+                  "type": {"type": "STRING", "enum": ["expense", "income"]},
+                  "category_id": {"type": "INTEGER"}
                 },
-                "required": ["description", "amount", "type"]
+                "required": ["description", "amount", "type", "category_id"]
               }
             }
           }
@@ -104,6 +116,27 @@ class ReceiptService {
       throw Exception('No valid response from Gemini');
     } catch (e) {
       throw Exception('Failed to analyze receipt: $e');
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> _fetchCategories() async {
+    try {
+      final userId = _supabase.auth.currentUser?.id;
+      if (userId == null) return [];
+
+      final response = await _supabase
+          .from('categories')
+          .select('id, name, type')
+          .or('is_default.eq.true,user_id.eq.$userId');
+
+      final List<dynamic> data = response as List<dynamic>;
+      return data
+          .where((c) => c['name'] != 'Duwitku Bot')
+          .map((e) => e as Map<String, dynamic>)
+          .toList();
+    } catch (e) {
+      // Fallback if fetching categories fails, just return empty so AI analyzes without categories
+      return [];
     }
   }
 }
