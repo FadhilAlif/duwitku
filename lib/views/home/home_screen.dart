@@ -106,7 +106,8 @@ class _MonthSelector extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedMonth = ref.watch(transactionFilterProvider);
+    final filterState = ref.watch(transactionFilterProvider);
+    final selectedMonth = filterState.dateRange.start;
     final notifier = ref.read(transactionFilterProvider.notifier);
 
     return Padding(

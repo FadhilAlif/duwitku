@@ -2,7 +2,9 @@ import 'package:duwitku/models/category.dart';
 import 'package:duwitku/models/transaction.dart' as t;
 import 'package:duwitku/providers/category_provider.dart';
 import 'package:duwitku/providers/transaction_provider.dart';
+import 'package:duwitku/utils/export_helper.dart';
 import 'package:duwitku/utils/icon_helper.dart';
+import 'package:duwitku/views/transaction/transaction_filter_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -10,32 +12,11 @@ import 'package:go_router/go_router.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:intl/intl.dart';
 
-enum TransactionFilter { all, income, expense, date, category }
-
-// Filter Notifier
-class TransactionScreenFilterNotifier extends Notifier<TransactionFilter> {
-  @override
-  TransactionFilter build() => TransactionFilter.all;
-
-  void setFilter(TransactionFilter filter) {
-    state = filter;
-  }
-}
-
-// Search Query Notifier
 class SearchQueryNotifier extends Notifier<String> {
   @override
   String build() => '';
-
-  void setQuery(String query) {
-    state = query;
-  }
+  void setQuery(String query) => state = query;
 }
-
-final transactionScreenFilterProvider =
-    NotifierProvider<TransactionScreenFilterNotifier, TransactionFilter>(() {
-      return TransactionScreenFilterNotifier();
-    });
 
 final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(() {
   return SearchQueryNotifier();
@@ -58,11 +39,22 @@ class TransactionScreen extends ConsumerWidget {
         centerTitle: true,
         elevation: 0,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        actions: [
+          transactionsAsync.maybeWhen(
+            data: (transactions) => categoriesAsync.maybeWhen(
+              data: (categories) => _ExportButton(
+                transactions: transactions,
+                categoryMap: {for (var c in categories) c.id: c},
+              ),
+              orElse: () => const SizedBox.shrink(),
+            ),
+            orElse: () => const SizedBox.shrink(),
+          ),
+        ],
       ),
       body: Column(
         children: [
-          _SearchBar(),
-          _FilterChips(),
+          const _FilterBar(),
           Expanded(
             child: transactionsAsync.when(
               data: (transactions) => categoriesAsync.when(
@@ -88,57 +80,98 @@ class TransactionScreen extends ConsumerWidget {
   }
 }
 
-class _SearchBar extends ConsumerWidget {
+class _ExportButton extends StatelessWidget {
+  final List<t.Transaction> transactions;
+  final Map<int, Category> categoryMap;
+
+  const _ExportButton({
+    required this.transactions,
+    required this.categoryMap,
+  });
+
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: TextField(
-        onChanged: (value) =>
-            ref.read(searchQueryProvider.notifier).setQuery(value),
-        decoration: InputDecoration(
-          hintText: 'Cari transaksi...',
-          prefixIcon: const Icon(Icons.search),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30.0),
-            borderSide: BorderSide.none,
+  Widget build(BuildContext context) {
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.download),
+      onSelected: (value) async {
+        if (value == 'csv') {
+          await ExportHelper.exportToCsv(transactions, categoryMap);
+        } else if (value == 'pdf') {
+          await ExportHelper.exportToPdf(transactions, categoryMap);
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'csv',
+          child: Row(
+            children: [
+              Icon(Icons.description, color: Colors.green),
+              SizedBox(width: 8),
+              Text('Export CSV'),
+            ],
           ),
-          filled: true,
-          fillColor: Colors.black,
-          contentPadding: EdgeInsets.zero,
         ),
-      ),
+        const PopupMenuItem<String>(
+          value: 'pdf',
+          child: Row(
+            children: [
+              Icon(Icons.picture_as_pdf, color: Colors.red),
+              SizedBox(width: 8),
+              Text('Export PDF'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
 
-class _FilterChips extends ConsumerWidget {
+class _FilterBar extends ConsumerWidget {
+  const _FilterBar();
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final currentFilter = ref.watch(transactionScreenFilterProvider);
-
-    return Container(
-      height: 50,
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12.0),
-        children: TransactionFilter.values.map((filter) {
-          return Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4.0),
-            child: ChoiceChip(
-              label: Text(filter.name.capitalize()),
-              selected: currentFilter == filter,
-              onSelected: (selected) {
-                if (selected) {
-                  ref
-                      .read(transactionScreenFilterProvider.notifier)
-                      .setFilter(filter);
-                }
-              },
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              onChanged: (value) =>
+                  ref.read(searchQueryProvider.notifier).setQuery(value),
+              decoration: InputDecoration(
+                hintText: 'Cari transaksi...',
+                prefixIcon: const Icon(Icons.search),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30.0),
+                  borderSide: BorderSide.none,
+                ),
+                filled: true,
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                contentPadding: EdgeInsets.zero,
+              ),
             ),
-          );
-        }).toList(),
+          ),
+          const SizedBox(width: 8),
+          FilledButton.tonal(
+            onPressed: () {
+              showModalBottomSheet(
+                context: context,
+                isScrollControlled: true,
+                shape: const RoundedRectangleBorder(
+                  borderRadius:
+                      BorderRadius.vertical(top: Radius.circular(16.0)),
+                ),
+                builder: (context) => const TransactionFilterSheet(),
+              );
+            },
+            style: FilledButton.styleFrom(
+              shape: const CircleBorder(),
+              padding: const EdgeInsets.all(12),
+            ),
+            child: const Icon(Icons.tune),
+          ),
+        ],
       ),
     );
   }
@@ -155,24 +188,14 @@ class _FilteredTransactionList extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final filter = ref.watch(transactionScreenFilterProvider);
     final searchQuery = ref.watch(searchQueryProvider).toLowerCase();
 
     final filteredTransactions = transactions.where((trx) {
+      if (searchQuery.isEmpty) return true;
+      
       final category = categoryMap[trx.categoryId];
-      final searchMatch =
-          trx.description?.toLowerCase().contains(searchQuery) ??
-          false ||
-              (category?.name.toLowerCase().contains(searchQuery) ?? false);
-
-      final typeMatch =
-          filter == TransactionFilter.all ||
-          (filter == TransactionFilter.income &&
-              trx.type == t.TransactionType.income) ||
-          (filter == TransactionFilter.expense &&
-              trx.type == t.TransactionType.expense);
-
-      return searchMatch && typeMatch;
+      return (trx.description?.toLowerCase().contains(searchQuery) ?? false) ||
+             (category?.name.toLowerCase().contains(searchQuery) ?? false);
     }).toList();
 
     if (filteredTransactions.isEmpty) {
@@ -255,7 +278,6 @@ class _TransactionListItem extends ConsumerWidget {
         motion: const DrawerMotion(),
         dismissible: DismissiblePane(
           confirmDismiss: () async {
-            // Show confirmation dialog
             final confirm = await showDialog<bool>(
               context: context,
               builder: (context) => AlertDialog(
@@ -282,14 +304,11 @@ class _TransactionListItem extends ConsumerWidget {
               await ref
                   .read(transactionRepositoryProvider)
                   .deleteTransaction(transaction.id);
-
-              // Wait a bit before invalidating to let animation complete
-              await Future.delayed(const Duration(milliseconds: 300));
-
-              // Force refresh the stream
-              ref.invalidate(filteredTransactionsStreamProvider);
+              
+              // Force refresh not strictly needed with stream but good practice if needed
+              // ref.invalidate(filteredTransactionsStreamProvider);
             } catch (e) {
-              // Error will be shown in the action button
+              // Error handling
             }
           },
         ),
@@ -318,38 +337,18 @@ class _TransactionListItem extends ConsumerWidget {
 
               if (confirm == true) {
                 try {
-                  // Show loading indicator
-                  if (context.mounted) {
+                   if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
-                        content: Row(
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  Colors.white,
-                                ),
-                              ),
-                            ),
-                            SizedBox(width: 16),
-                            Text('Menghapus transaksi...'),
-                          ],
-                        ),
+                        content: Text('Menghapus transaksi...'),
                         duration: Duration(seconds: 1),
                       ),
                     );
                   }
 
-                  // Delete from database
                   await ref
                       .read(transactionRepositoryProvider)
                       .deleteTransaction(transaction.id);
-
-                  // Force refresh the stream
-                  ref.invalidate(filteredTransactionsStreamProvider);
 
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).hideCurrentSnackBar();
