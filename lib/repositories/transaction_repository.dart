@@ -53,4 +53,24 @@ class TransactionRepository {
   Future<void> deleteTransaction(String id) async {
     await _client.from('transactions').delete().eq('id', id);
   }
+
+  Future<double> getMaxTransactionAmount() async {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) return 0;
+
+    try {
+      final response = await _client
+          .from('transactions')
+          .select('amount')
+          .eq('user_id', userId)
+          .order('amount', ascending: false)
+          .limit(1)
+          .maybeSingle();
+      
+      if (response == null) return 0;
+      return (response['amount'] as num).toDouble();
+    } catch (e) {
+      return 0;
+    }
+  }
 }

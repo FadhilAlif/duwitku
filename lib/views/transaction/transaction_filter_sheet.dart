@@ -20,9 +20,6 @@ class _TransactionFilterSheetState
   RangeValues? _amountRange;
   List<TransactionType> _selectedTypes = [];
 
-  // Max amount for slider (should be dynamic but fixed for now or passed in)
-  static const double _maxAmount = 1000000; // 10 Juta
-
   @override
   void initState() {
     super.initState();
@@ -36,6 +33,7 @@ class _TransactionFilterSheetState
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final maxAmountAsync = ref.watch(maxTransactionAmountProvider);
 
     return Container(
       padding: const EdgeInsets.all(16.0),
@@ -139,45 +137,65 @@ class _TransactionFilterSheetState
                 ),
                 const SizedBox(height: 16),
                 _buildSectionTitle('Rentang Jumlah'),
-                RangeSlider(
-                  values: _amountRange ?? const RangeValues(0, _maxAmount),
-                  min: 0,
-                  max: _maxAmount,
-                  divisions: 100,
-                  labels: RangeLabels(
-                    NumberFormat.compactCurrency(
-                      locale: 'id_ID',
-                      symbol: 'Rp',
-                    ).format(_amountRange?.start ?? 0),
-                    NumberFormat.compactCurrency(
-                      locale: 'id_ID',
-                      symbol: 'Rp',
-                    ).format(_amountRange?.end ?? _maxAmount),
-                  ),
-                  onChanged: (values) {
-                    setState(() {
-                      _amountRange = values;
-                    });
+                maxAmountAsync.when(
+                  data: (maxData) {
+                    final maxAmount = maxData > 0 ? maxData : 10000000.0;
+                    // Ensure current range is valid
+                    var start = _amountRange?.start ?? 0;
+                    var end = _amountRange?.end ?? maxAmount;
+
+                    if (end > maxAmount) end = maxAmount;
+                    if (start > end) start = 0;
+
+                    final currentRange = RangeValues(start, end);
+
+                    return Column(
+                      children: [
+                        RangeSlider(
+                          values: currentRange,
+                          min: 0,
+                          max: maxAmount,
+                          divisions: 100,
+                          labels: RangeLabels(
+                            NumberFormat.compactCurrency(
+                              locale: 'id_ID',
+                              symbol: 'Rp',
+                            ).format(currentRange.start),
+                            NumberFormat.compactCurrency(
+                              locale: 'id_ID',
+                              symbol: 'Rp',
+                            ).format(currentRange.end),
+                          ),
+                          onChanged: (values) {
+                            setState(() {
+                              _amountRange = values;
+                            });
+                          },
+                        ),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(
+                              NumberFormat.currency(
+                                locale: 'id_ID',
+                                symbol: 'Rp ',
+                                decimalDigits: 0,
+                              ).format(currentRange.start),
+                            ),
+                            Text(
+                              NumberFormat.currency(
+                                locale: 'id_ID',
+                                symbol: 'Rp ',
+                                decimalDigits: 0,
+                              ).format(currentRange.end),
+                            ),
+                          ],
+                        ),
+                      ],
+                    );
                   },
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      NumberFormat.currency(
-                        locale: 'id_ID',
-                        symbol: 'Rp ',
-                        decimalDigits: 0,
-                      ).format(_amountRange?.start ?? 0),
-                    ),
-                    Text(
-                      NumberFormat.currency(
-                        locale: 'id_ID',
-                        symbol: 'Rp ',
-                        decimalDigits: 0,
-                      ).format(_amountRange?.end ?? _maxAmount),
-                    ),
-                  ],
+                  loading: () => const Center(child: CircularProgressIndicator()),
+                  error: (err, _) => Text('Error: $err'),
                 ),
               ],
             ),

@@ -1,6 +1,7 @@
 import 'package:duwitku/models/category.dart';
 import 'package:duwitku/providers/category_provider.dart';
 import 'package:duwitku/providers/transaction_provider.dart';
+import 'package:duwitku/providers/ui_provider.dart';
 import 'package:duwitku/models/transaction.dart' as t;
 import 'package:duwitku/utils/icon_helper.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
     final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final isBalanceVisible = ref.watch(isBalanceVisibleProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -45,6 +47,7 @@ class HomeScreen extends ConsumerWidget {
               ref,
               transactions,
               categoryMap,
+              isBalanceVisible,
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),
@@ -62,6 +65,7 @@ class HomeScreen extends ConsumerWidget {
     WidgetRef ref,
     List<t.Transaction> transactions,
     Map<int, Category> categoryMap,
+    bool isBalanceVisible,
   ) {
     final totalIncome = transactions
         .where((trx) => trx.type == t.TransactionType.income)
@@ -71,6 +75,13 @@ class HomeScreen extends ConsumerWidget {
         .fold(0.0, (sum, item) => sum + item.amount);
     final balance = totalIncome - totalExpense;
 
+    final now = DateTime.now();
+    final todayTransactions = transactions.where((trx) {
+      return trx.transactionDate.year == now.year &&
+          trx.transactionDate.month == now.month &&
+          trx.transactionDate.day == now.day;
+    }).toList();
+
     return Column(
       children: [
         const _MonthSelector(),
@@ -78,21 +89,32 @@ class HomeScreen extends ConsumerWidget {
           balance: balance,
           totalIncome: totalIncome,
           totalExpense: totalExpense,
+          isVisible: isBalanceVisible,
+          onToggleVisibility: () =>
+              ref.read(isBalanceVisibleProvider.notifier).toggle(),
         ),
         _TransactionsChart(transactions: transactions),
-        const Padding(
-          padding: EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: Text(
-              'Transaksi Terkini',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-            ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Transaksi Terkini',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              TextButton(
+                onPressed: () {
+                  ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                },
+                child: const Text('Lihat semua'),
+              ),
+            ],
           ),
         ),
         Expanded(
           child: _TransactionList(
-            transactions: transactions,
+            transactions: todayTransactions,
             categoryMap: categoryMap,
           ),
         ),
@@ -100,6 +122,8 @@ class HomeScreen extends ConsumerWidget {
     );
   }
 }
+
+// ... _MonthSelector remains unchanged ...
 
 class _MonthSelector extends ConsumerWidget {
   const _MonthSelector();
@@ -143,11 +167,15 @@ class _SummaryCard extends StatelessWidget {
   final double balance;
   final double totalIncome;
   final double totalExpense;
+  final bool isVisible;
+  final VoidCallback onToggleVisibility;
 
   const _SummaryCard({
     required this.balance,
     required this.totalIncome,
     required this.totalExpense,
+    required this.isVisible,
+    required this.onToggleVisibility,
   });
 
   @override
@@ -180,13 +208,28 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Total Saldo',
-            style: TextStyle(color: Colors.white, fontSize: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Total Saldo',
+                style: TextStyle(color: Colors.white, fontSize: 16),
+              ),
+              IconButton(
+                icon: Icon(
+                  isVisible ? Icons.visibility : Icons.visibility_off,
+                  color: Colors.white,
+                ),
+                onPressed: onToggleVisibility,
+                visualDensity: VisualDensity.compact,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
-            currencyFormatter.format(balance),
+            isVisible ? currencyFormatter.format(balance) : 'Rp ********',
             style: const TextStyle(
               color: Colors.white,
               fontSize: 32,
@@ -203,6 +246,7 @@ class _SummaryCard extends StatelessWidget {
                 amount: totalIncome,
                 color: Colors.white,
                 formatter: currencyFormatter,
+                isVisible: isVisible,
               ),
               _SummaryItem(
                 icon: Icons.arrow_upward,
@@ -210,6 +254,7 @@ class _SummaryCard extends StatelessWidget {
                 amount: totalExpense,
                 color: Colors.white,
                 formatter: currencyFormatter,
+                isVisible: isVisible,
               ),
             ],
           ),
@@ -226,6 +271,7 @@ class _SummaryItem extends StatelessWidget {
     required this.amount,
     required this.color,
     required this.formatter,
+    required this.isVisible,
   });
 
   final IconData icon;
@@ -233,6 +279,7 @@ class _SummaryItem extends StatelessWidget {
   final double amount;
   final Color color;
   final NumberFormat formatter;
+  final bool isVisible;
 
   @override
   Widget build(BuildContext context) {
@@ -251,7 +298,7 @@ class _SummaryItem extends StatelessWidget {
               ),
             ),
             Text(
-              formatter.format(amount),
+              isVisible ? formatter.format(amount) : '********',
               style: TextStyle(
                 color: color,
                 fontWeight: FontWeight.bold,

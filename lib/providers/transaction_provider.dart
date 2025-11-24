@@ -113,3 +113,9 @@ final filteredTransactionsStreamProvider =
     }).toList();
   });
 });
+
+final maxTransactionAmountProvider = FutureProvider.autoDispose<double>((ref) {
+  final repository = ref.watch(transactionRepositoryProvider);
+  return repository.getMaxTransactionAmount();
+});
+

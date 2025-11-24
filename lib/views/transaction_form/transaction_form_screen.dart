@@ -32,9 +32,11 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   void initState() {
     super.initState();
     _amountController = TextEditingController(
-        text: widget.transaction?.amount.toStringAsFixed(0) ?? '');
-    _descriptionController =
-        TextEditingController(text: widget.transaction?.description ?? '');
+      text: widget.transaction?.amount.toStringAsFixed(0) ?? '',
+    );
+    _descriptionController = TextEditingController(
+      text: widget.transaction?.description ?? '',
+    );
 
     if (widget.transaction != null) {
       final trx = widget.transaction!;
@@ -53,9 +55,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     if (_selectedCategory == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Silakan pilih kategori')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Silakan pilih kategori')));
       return;
     }
 
@@ -96,8 +98,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-              content: Text('Gagal menyimpan transaksi: ${e.toString()}')),
+          SnackBar(content: Text('Gagal menyimpan transaksi: ${e.toString()}')),
         );
       }
     }
@@ -111,7 +112,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text(
-            widget.transaction == null ? 'Tambah Transaksi' : 'Ubah Transaksi'),
+          widget.transaction == null ? 'Tambah Transaksi' : 'Ubah Transaksi',
+        ),
         backgroundColor: themeColor.withAlpha(25),
         elevation: 0,
         foregroundColor: themeColor,
@@ -127,18 +129,17 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                 _selectedCategory = null;
               }),
             ),
-            _AmountInput(
-              controller: _amountController,
-              color: themeColor,
-            ),
+            _AmountInput(controller: _amountController, color: themeColor),
             Expanded(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Kategori',
-                        style: Theme.of(context).textTheme.titleMedium),
+                    Text(
+                      'Kategori',
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
                     const SizedBox(height: 8),
                     _CategoryGrid(
                       transactionType: _transactionType,
@@ -172,7 +173,8 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
                   child: Text(
-                      widget.transaction == null ? 'Simpan' : 'Perbarui'),
+                    widget.transaction == null ? 'Simpan' : 'Perbarui',
+                  ),
                 ),
               ),
             ),
@@ -199,24 +201,31 @@ class _AmountInput extends StatelessWidget {
           controller: controller,
           textAlign: TextAlign.center,
           style: TextStyle(
-              fontSize: 48, fontWeight: FontWeight.bold, color: color),
+            fontSize: 48,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
           keyboardType: TextInputType.number,
           inputFormatters: [
             CurrencyInputFormatter(
               thousandSeparator: ThousandSeparator.Period,
               mantissaLength: 0,
-            )
+            ),
           ],
           decoration: InputDecoration(
             border: InputBorder.none,
             prefixText: 'Rp ',
             prefixStyle: TextStyle(
-                fontSize: 48, fontWeight: FontWeight.bold, color: color),
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
             hintText: '0',
             hintStyle: TextStyle(
-                fontSize: 48,
-                fontWeight: FontWeight.bold,
-                color: color.withAlpha(128)),
+              fontSize: 48,
+              fontWeight: FontWeight.bold,
+              color: color.withAlpha(128),
+            ),
           ),
           validator: (value) {
             if (value == null || value.isEmpty || value == '0') {
@@ -257,10 +266,13 @@ class _TypeToggle extends StatelessWidget {
         onSelectionChanged: (newSelection) => onChanged(newSelection.first),
         style: SegmentedButton.styleFrom(
           selectedBackgroundColor:
-              (transactionType == t.TransactionType.expense ? Colors.red : Colors.green)
+              (transactionType == t.TransactionType.expense
+                      ? Colors.red
+                      : Colors.green)
                   .withAlpha(50),
-          selectedForegroundColor:
-              transactionType == t.TransactionType.expense ? Colors.red : Colors.green,
+          selectedForegroundColor: transactionType == t.TransactionType.expense
+              ? Colors.red
+              : Colors.green,
         ),
       ),
     );
@@ -290,14 +302,16 @@ class _CategoryGrid extends ConsumerWidget {
 
     return categoriesAsync.when(
       data: (categories) {
-        final filteredCategories =
-            categories.where((c) => c.type.name == transactionType.name).toList();
+        final filteredCategories = categories
+            .where((c) => c.type.name == transactionType.name)
+            .toList();
 
         if (initialTransaction != null && selectedCategory == null) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             try {
-              final initialCategory = categories
-                  .firstWhere((c) => c.id == initialTransaction!.categoryId);
+              final initialCategory = categories.firstWhere(
+                (c) => c.id == initialTransaction!.categoryId,
+              );
               onCategorySelected(initialCategory);
             } catch (e) {
               // ignore
@@ -305,8 +319,9 @@ class _CategoryGrid extends ConsumerWidget {
           });
         }
 
-        final itemsToShow =
-            showAll ? filteredCategories : filteredCategories.take(5).toList();
+        final itemsToShow = showAll
+            ? filteredCategories
+            : filteredCategories.take(5).toList();
 
         return Wrap(
           spacing: 8.0,
@@ -324,7 +339,7 @@ class _CategoryGrid extends ConsumerWidget {
               ActionChip(
                 label: const Text('Lihat Semua'),
                 onPressed: onShowAll,
-              )
+              ),
           ],
         );
       },
@@ -339,10 +354,11 @@ class _DetailsCard extends StatelessWidget {
   final TextEditingController descriptionController;
   final ValueChanged<DateTime> onDateChanged;
 
-  const _DetailsCard(
-      {required this.selectedDate,
-      required this.descriptionController,
-      required this.onDateChanged});
+  const _DetailsCard({
+    required this.selectedDate,
+    required this.descriptionController,
+    required this.onDateChanged,
+  });
 
   String _formatDate(DateTime date) {
     final now = DateTime.now();
@@ -376,7 +392,7 @@ class _DetailsCard extends StatelessWidget {
         children: [
           ListTile(
             leading: const Icon(Icons.calendar_today),
-            title: const Text('Tanggal'),
+            title: const Text('Tanggal', style: TextStyle(fontSize: 15)),
             trailing: ActionChip(
               avatar: const Icon(Icons.keyboard_arrow_down),
               label: Text(_formatDate(selectedDate)),

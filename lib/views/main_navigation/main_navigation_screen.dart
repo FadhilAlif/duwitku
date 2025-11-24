@@ -2,20 +2,20 @@ import 'package:duwitku/views/budget/budget_screen.dart';
 import 'package:duwitku/views/home/home_screen.dart';
 import 'package:duwitku/views/profile/profile_screen.dart';
 import 'package:duwitku/views/transaction/transaction_screen.dart';
+import 'package:duwitku/providers/ui_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:google_nav_bar/google_nav_bar.dart';
 
-class MainNavigationScreen extends StatefulWidget {
+class MainNavigationScreen extends ConsumerStatefulWidget {
   const MainNavigationScreen({super.key});
 
   @override
-  State<MainNavigationScreen> createState() => _MainNavigationScreenState();
+  ConsumerState<MainNavigationScreen> createState() => _MainNavigationScreenState();
 }
 
-class _MainNavigationScreenState extends State<MainNavigationScreen> {
-  int _selectedIndex = 0;
-
+class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   static final List<Widget> _widgetOptions = <Widget>[
     HomeScreen(),
     TransactionScreen(),
@@ -73,8 +73,10 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final selectedIndex = ref.watch(bottomNavIndexProvider);
+
     return Scaffold(
-      body: Center(child: _widgetOptions.elementAt(_selectedIndex)),
+      body: Center(child: _widgetOptions.elementAt(selectedIndex)),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showAddTransactionModal(context),
         backgroundColor: const Color(0xFF14894e),
@@ -114,11 +116,9 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
                 GButton(icon: Icons.account_balance_wallet, text: 'Anggaran'),
                 GButton(icon: Icons.person, text: 'Profil'),
               ],
-              selectedIndex: _selectedIndex,
+              selectedIndex: selectedIndex,
               onTabChange: (index) {
-                setState(() {
-                  _selectedIndex = index;
-                });
+                ref.read(bottomNavIndexProvider.notifier).setIndex(index);
               },
             ),
           ),
@@ -127,3 +127,4 @@ class _MainNavigationScreenState extends State<MainNavigationScreen> {
     );
   }
 }
+
