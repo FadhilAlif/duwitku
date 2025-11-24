@@ -33,7 +33,7 @@ class CategoryRepository {
         .from('categories')
         .select()
         .or('user_id.eq.$userId,and(is_default.eq.true,user_id.is.null)')
-        .order('name', ascending: true);
+        .order('id', ascending: false);
 
     return (response as List)
         .map((map) => Category.fromJson(map as Map<String, dynamic>))

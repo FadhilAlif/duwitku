@@ -42,6 +42,7 @@ class IconHelper {
     'lightbulb': Icons.lightbulb,
     'water_drop': Icons.water_drop,
     'wifi': Icons.wifi,
+    'network_cell': Icons.network_cell,
     'phone': Icons.phone,
     'router': Icons.router,
     'power': Icons.power,
@@ -77,6 +78,7 @@ class IconHelper {
     'business': Icons.business,
     'business_center': Icons.business_center,
     'laptop': Icons.laptop,
+    'robot': Icons.smart_toy,
 
     // Income
     'trending_up': Icons.trending_up,
@@ -166,6 +168,7 @@ class IconHelper {
               'lightbulb',
               'water_drop',
               'wifi',
+              'network_cell',
               'phone',
               'router',
               'power',
@@ -211,7 +214,12 @@ class IconHelper {
           .toList(),
       'Pekerjaan': _iconMap.entries
           .where(
-            (e) => ['business', 'business_center', 'laptop'].contains(e.key),
+            (e) => [
+              'business',
+              'business_center',
+              'laptop',
+              'robot',
+            ].contains(e.key),
           )
           .toList(),
       'Lainnya': _iconMap.entries
