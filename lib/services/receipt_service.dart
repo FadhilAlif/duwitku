@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:dio/dio.dart';
 import 'package:duwitku/models/receipt_item.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:uuid/uuid.dart';
 
@@ -12,13 +14,33 @@ class ReceiptService {
   final Dio _dio = Dio();
   final Uuid _uuid = const Uuid();
 
-  // Upload image to Supabase Storage and return public URL
+  // Compress image for storage (low quality)
+  Future<File> _compressImage(File file) async {
+    final dir = await getTemporaryDirectory();
+    final targetPath = '${dir.path}/${_uuid.v4()}.jpg';
+
+    final result = await FlutterImageCompress.compressAndGetFile(
+      file.absolute.path,
+      targetPath,
+      quality: 30, // Low quality untuk storage
+      minWidth: 800,
+      minHeight: 800,
+    );
+
+    if (result == null) throw Exception('Failed to compress image');
+    return File(result.path);
+  }
+
+  // Upload COMPRESSED image to Supabase Storage and return public URL
   Future<String> uploadReceiptImage(File file) async {
     try {
       final userId = _supabase.auth.currentUser?.id;
       if (userId == null) throw Exception('User not logged in');
 
-      final fileExt = file.path.split('.').last;
+      // Compress image before upload
+      final compressedFile = await _compressImage(file);
+
+      final fileExt = compressedFile.path.split('.').last;
       final fileName = '${_uuid.v4()}.$fileExt';
       final filePath = '$userId/$fileName';
 
@@ -26,13 +48,16 @@ class ReceiptService {
           .from('duwitku-receipt')
           .upload(
             filePath,
-            file,
+            compressedFile,
             fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
           );
 
       final publicUrl = _supabase.storage
           .from('duwitku-receipt')
           .getPublicUrl(filePath);
+
+      // Clean up temporary compressed file
+      await compressedFile.delete();
 
       return publicUrl;
     } catch (e) {
@@ -94,25 +119,29 @@ class ReceiptService {
                 "properties": {
                   "description": {"type": "STRING"},
                   "amount": {"type": "NUMBER"},
-                  "type": {"type": "STRING", "enum": ["expense", "income"]},
-                  "category_id": {"type": "INTEGER"}
+                  "type": {
+                    "type": "STRING",
+                    "enum": ["expense", "income"],
+                  },
+                  "category_id": {"type": "INTEGER"},
                 },
-                "required": ["description", "amount", "type", "category_id"]
-              }
-            }
-          }
+                "required": ["description", "amount", "type", "category_id"],
+              },
+            },
+          },
         },
       );
 
       if (response.statusCode == 200) {
         final candidates = response.data['candidates'] as List;
         if (candidates.isNotEmpty) {
-          final content = candidates[0]['content']['parts'][0]['text'] as String;
+          final content =
+              candidates[0]['content']['parts'][0]['text'] as String;
           final List<dynamic> jsonList = jsonDecode(content);
           return jsonList.map((e) => ReceiptItem.fromJson(e)).toList();
         }
       }
-      
+
       throw Exception('No valid response from Gemini');
     } catch (e) {
       throw Exception('Failed to analyze receipt: $e');
