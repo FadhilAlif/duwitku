@@ -244,7 +244,7 @@ class _TransactionListItem extends ConsumerWidget {
             onPressed: (context) {
               context.push('/transaction_form', extra: transaction);
             },
-            backgroundColor: Colors.blue,
+            backgroundColor: Colors.yellow.shade700,
             foregroundColor: Colors.white,
             icon: Icons.edit,
             label: 'Ubah',
