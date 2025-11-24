@@ -506,7 +506,7 @@ class _BudgetCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade200,
+                  color: Colors.black.withAlpha(20),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
@@ -514,7 +514,7 @@ class _BudgetCard extends StatelessWidget {
                     'Limit: ${currencyFormatter.format(budget.amountLimit)}',
                     style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey.shade700,
+                      color: Colors.white,
                       fontWeight: FontWeight.w500,
                     ),
                   ),

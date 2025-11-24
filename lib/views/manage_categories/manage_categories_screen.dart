@@ -134,7 +134,7 @@ class ManageCategoriesScreen extends ConsumerWidget {
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _showCategoryModal(context),
         icon: const Icon(Icons.add),
-        label: const Text('Tambah Kategori'),
+        label: const Text('Kategori'),
       ),
     );
   }
