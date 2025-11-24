@@ -1,6 +1,7 @@
 import 'package:duwitku/providers/profile_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfileHeader extends ConsumerWidget {
   const ProfileHeader({super.key});
@@ -12,8 +13,9 @@ class ProfileHeader extends ConsumerWidget {
 
     return profileAsync.when(
       data: (profile) {
+        final user = Supabase.instance.client.auth.currentUser;
         final userEmail = profile.email ?? 'Tidak ada Email';
-        final userAvatarUrl = profile.avatarUrl;
+        final userAvatarUrl = user?.userMetadata?['avatar_url'] as String?;
         final userName = profile.displayName ?? 'Tidak ada Nama';
 
         return Container(

@@ -3,7 +3,6 @@ class UserProfile {
   final String? email;
   final String? displayName;
   final String? phoneNumber;
-  final String? avatarUrl;
   final DateTime? updatedAt;
 
   UserProfile({
@@ -11,7 +10,6 @@ class UserProfile {
     this.email,
     this.displayName,
     this.phoneNumber,
-    this.avatarUrl,
     this.updatedAt,
   });
 
@@ -21,7 +19,6 @@ class UserProfile {
       email: json['email'] as String?,
       displayName: json['display_name'] as String?,
       phoneNumber: json['phone_number'] as String?,
-      avatarUrl: json['avatar_url'] as String?,
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
           : null,
@@ -34,7 +31,6 @@ class UserProfile {
       'email': email,
       'display_name': displayName,
       'phone_number': phoneNumber,
-      'avatar_url': avatarUrl,
       'updated_at': updatedAt?.toIso8601String(),
     };
   }
@@ -44,7 +40,6 @@ class UserProfile {
     String? email,
     String? displayName,
     String? phoneNumber,
-    String? avatarUrl,
     DateTime? updatedAt,
   }) {
     return UserProfile(
@@ -52,7 +47,6 @@ class UserProfile {
       email: email ?? this.email,
       displayName: displayName ?? this.displayName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
-      avatarUrl: avatarUrl ?? this.avatarUrl,
       updatedAt: updatedAt ?? this.updatedAt,
     );
   }

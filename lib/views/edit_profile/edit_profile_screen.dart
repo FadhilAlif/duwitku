@@ -32,7 +32,10 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     if (!_isInitialized) {
       _displayNameController.text = profile.displayName ?? '';
       _phoneController.text = profile.phoneNumber ?? '';
-      _emailController.text = profile.email ?? Supabase.instance.client.auth.currentUser?.email ?? '';
+      _emailController.text =
+          profile.email ??
+          Supabase.instance.client.auth.currentUser?.email ??
+          '';
       _isInitialized = true;
     }
   }
@@ -53,7 +56,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
       );
 
       await repository.updateProfile(updatedProfile);
-      
+
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -86,13 +89,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
     final profileAsync = ref.watch(profileStreamProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Ubah Profil'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Ubah Profil'), centerTitle: true),
       body: profileAsync.when(
         data: (profile) {
           _initializeControllers(profile);
+          final user = Supabase.instance.client.auth.currentUser;
+          final userAvatarUrl = user?.userMetadata?['avatar_url'] as String?;
+
           return SingleChildScrollView(
             padding: const EdgeInsets.all(16.0),
             child: Form(
@@ -105,15 +108,19 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       children: [
                         CircleAvatar(
                           radius: 50,
-                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                          backgroundImage: profile.avatarUrl != null 
-                              ? NetworkImage(profile.avatarUrl!) 
+                          backgroundColor: Theme.of(
+                            context,
+                          ).colorScheme.primaryContainer,
+                          backgroundImage: userAvatarUrl != null
+                              ? NetworkImage(userAvatarUrl)
                               : null,
-                          child: profile.avatarUrl == null
+                          child: userAvatarUrl == null
                               ? Icon(
                                   Icons.person,
                                   size: 50,
-                                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+                                  color: Theme.of(
+                                    context,
+                                  ).colorScheme.onPrimaryContainer,
                                 )
                               : null,
                         ),
@@ -174,7 +181,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                   ),
                   const SizedBox(height: 32),
                   FilledButton(
-                    onPressed: _isLoading ? null : () => _saveProfile(profile.id),
+                    onPressed: _isLoading
+                        ? null
+                        : () => _saveProfile(profile.id),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
@@ -195,9 +204,8 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           );
         },
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stack) => Center(
-          child: Text('Terjadi kesalahan: $error'),
-        ),
+        error: (error, stack) =>
+            Center(child: Text('Terjadi kesalahan: $error')),
       ),
     );
   }
