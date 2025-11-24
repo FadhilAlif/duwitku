@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 // Main Screen Widget
 class BudgetScreen extends ConsumerWidget {
@@ -36,7 +37,7 @@ class BudgetScreen extends ConsumerWidget {
   }
 }
 
-// Month Selector Widget
+// ... _MonthSelector remains unchanged ...
 class _MonthSelector extends ConsumerWidget {
   const _MonthSelector();
   @override
@@ -76,6 +77,39 @@ class _BudgetBody extends ConsumerWidget {
     final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
     final categoriesAsync = ref.watch(categoriesStreamProvider);
 
+    final isLoading = budgetsAsync.isLoading ||
+        transactionsAsync.isLoading ||
+        categoriesAsync.isLoading;
+
+    final budgets = isLoading
+        ? List.generate(
+            3,
+            (index) => Budget(
+              id: index,
+              userId: 'dummy',
+              categoryId: 0,
+              amountLimit: 1000000,
+              startDate: DateTime.now(),
+              endDate: DateTime.now(),
+            ),
+          )
+        : budgetsAsync.asData?.value ?? [];
+
+    final transactions = isLoading
+        ? <t.Transaction>[]
+        : transactionsAsync.asData?.value ?? [];
+
+    final categories = isLoading
+        ? [
+            Category(
+              id: 0,
+              name: 'Loading Category',
+              type: CategoryType.expense,
+              iconName: 'help_outline',
+            )
+          ]
+        : categoriesAsync.asData?.value ?? [];
+
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(budgetsStreamProvider);
@@ -83,24 +117,15 @@ class _BudgetBody extends ConsumerWidget {
         ref.invalidate(categoriesStreamProvider);
         await Future.delayed(const Duration(milliseconds: 500));
       },
-      child: budgetsAsync.when(
-        data: (budgets) => transactionsAsync.when(
-          data: (transactions) => categoriesAsync.when(
-            data: (categories) => budgets.isEmpty
-                ? const _EmptyState()
-                : _BudgetList(
-                    budgets: budgets,
-                    transactions: transactions,
-                    categories: categories,
-                  ),
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, s) => Text('Error memuat kategori: $e'),
-          ),
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, s) => Text('Error memuat transaksi: $e'),
-        ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Text('Error memuat budget: $e'),
+      child: Skeletonizer(
+        enabled: isLoading,
+        child: budgets.isEmpty && !isLoading
+            ? const _EmptyState()
+            : _BudgetList(
+                budgets: budgets,
+                transactions: transactions,
+                categories: categories,
+              ),
       ),
     );
   }

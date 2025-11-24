@@ -7,6 +7,7 @@ import 'package:duwitku/utils/icon_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:collection/collection.dart';
@@ -19,6 +20,40 @@ class HomeScreen extends ConsumerWidget {
     final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
     final categoriesAsync = ref.watch(categoriesStreamProvider);
     final isBalanceVisible = ref.watch(isBalanceVisibleProvider);
+
+    final isLoading = transactionsAsync.isLoading || categoriesAsync.isLoading;
+
+    // Generate dummy data for loading state
+    final transactions = isLoading
+        ? List.generate(
+            5,
+            (index) => t.Transaction(
+              id: 'dummy_$index',
+              userId: 'dummy',
+              categoryId: 0,
+              amount: 100000,
+              transactionDate: DateTime.now(),
+              type: index % 2 == 0
+                  ? t.TransactionType.income
+                  : t.TransactionType.expense,
+              sourceType: t.SourceType.app,
+              description: 'Loading Transaction...',
+            ),
+          )
+        : transactionsAsync.asData?.value ?? [];
+
+    final categories = isLoading
+        ? [
+            Category(
+              id: 0,
+              name: 'Loading...',
+              type: CategoryType.expense,
+              iconName: 'help_outline',
+            )
+          ]
+        : categoriesAsync.asData?.value ?? [];
+
+    final categoryMap = {for (var c in categories) c.id: c};
 
     return Scaffold(
       appBar: AppBar(
@@ -38,24 +73,15 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-      body: transactionsAsync.when(
-        data: (transactions) => categoriesAsync.when(
-          data: (categories) {
-            final categoryMap = {for (var c in categories) c.id: c};
-            return _buildHomeScreenContent(
-              context,
-              ref,
-              transactions,
-              categoryMap,
-              isBalanceVisible,
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) =>
-              Center(child: Text('Gagal memuat kategori: $err')),
+      body: Skeletonizer(
+        enabled: isLoading,
+        child: _buildHomeScreenContent(
+          context,
+          ref,
+          transactions,
+          categoryMap,
+          isBalanceVisible,
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text('Terjadi kesalahan: $err')),
       ),
     );
   }

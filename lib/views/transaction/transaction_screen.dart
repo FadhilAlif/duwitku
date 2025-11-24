@@ -11,6 +11,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:go_router/go_router.dart';
 import 'package:grouped_list/grouped_list.dart';
 import 'package:intl/intl.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 class SearchQueryNotifier extends Notifier<String> {
   @override
@@ -30,6 +31,39 @@ class TransactionScreen extends ConsumerWidget {
     final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
     final categoriesAsync = ref.watch(categoriesStreamProvider);
 
+    final isLoading = transactionsAsync.isLoading || categoriesAsync.isLoading;
+
+    final transactions = isLoading
+        ? List.generate(
+            6,
+            (index) => t.Transaction(
+              id: 'dummy_$index',
+              userId: 'dummy',
+              categoryId: 0,
+              amount: 50000 * (index + 1).toDouble(),
+              transactionDate: DateTime.now(),
+              type: index % 2 == 0
+                  ? t.TransactionType.income
+                  : t.TransactionType.expense,
+              sourceType: t.SourceType.app,
+              description: 'Loading Transaction...',
+            ),
+          )
+        : transactionsAsync.asData?.value ?? [];
+
+    final categories = isLoading
+        ? [
+            Category(
+              id: 0,
+              name: 'Loading Category',
+              type: CategoryType.expense,
+              iconName: 'help_outline',
+            )
+          ]
+        : categoriesAsync.asData?.value ?? [];
+
+    final categoryMap = {for (var c in categories) c.id: c};
+
     return Scaffold(
       appBar: AppBar(
         title: const Text(
@@ -40,16 +74,11 @@ class TransactionScreen extends ConsumerWidget {
         elevation: 0,
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         actions: [
-          transactionsAsync.maybeWhen(
-            data: (transactions) => categoriesAsync.maybeWhen(
-              data: (categories) => _ExportButton(
-                transactions: transactions,
-                categoryMap: {for (var c in categories) c.id: c},
-              ),
-              orElse: () => const SizedBox.shrink(),
+          if (!isLoading && transactions.isNotEmpty)
+            _ExportButton(
+              transactions: transactions,
+              categoryMap: categoryMap,
             ),
-            orElse: () => const SizedBox.shrink(),
-          ),
         ],
       ),
       body: Column(
@@ -63,23 +92,12 @@ class TransactionScreen extends ConsumerWidget {
                 // Wait a bit for the providers to refresh
                 await Future.delayed(const Duration(milliseconds: 500));
               },
-              child: transactionsAsync.when(
-                data: (transactions) => categoriesAsync.when(
-                  data: (categories) {
-                    final categoryMap = {for (var c in categories) c.id: c};
-                    return _FilteredTransactionList(
-                      transactions: transactions,
-                      categoryMap: categoryMap,
-                    );
-                  },
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) =>
-                      Center(child: Text('Gagal memuat kategori: $err')),
+              child: Skeletonizer(
+                enabled: isLoading,
+                child: _FilteredTransactionList(
+                  transactions: transactions,
+                  categoryMap: categoryMap,
                 ),
-                loading: () => const Center(child: CircularProgressIndicator()),
-                error: (err, stack) =>
-                    Center(child: Text('Terjadi kesalahan: $err')),
               ),
             ),
           ),
