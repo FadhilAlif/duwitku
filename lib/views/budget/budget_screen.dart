@@ -766,8 +766,9 @@ class _BudgetFormState extends ConsumerState<_BudgetForm> {
                               .toList();
                           final availableCategories = categories.where((c) {
                             if (_isEditMode &&
-                                c.id == widget.budget!.categoryId)
+                                c.id == widget.budget!.categoryId) {
                               return true;
+                            }
                             return !budgetedCategoryIds.contains(c.id) &&
                                 c.type == CategoryType.expense;
                           }).toList();

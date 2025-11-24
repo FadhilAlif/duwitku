@@ -280,7 +280,29 @@ class _TransactionsChart extends StatelessWidget {
         BarChartData(
           alignment: BarChartAlignment.spaceAround,
           maxY: _calculateMaxY(dailySummary),
-          barTouchData: BarTouchData(enabled: true),
+          barTouchData: BarTouchData(
+            enabled: true,
+            touchTooltipData: BarTouchTooltipData(
+              getTooltipColor: (group) => Colors.blueGrey,
+              tooltipPadding: const EdgeInsets.all(8),
+              tooltipMargin: 8,
+              getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                final currencyFormatter = NumberFormat.currency(
+                  locale: 'id_ID',
+                  symbol: 'Rp ',
+                  decimalDigits: 0,
+                );
+                return BarTooltipItem(
+                  currencyFormatter.format(rod.toY),
+                  const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                );
+              },
+            ),
+          ),
           titlesData: FlTitlesData(
             show: true,
             bottomTitles: AxisTitles(
