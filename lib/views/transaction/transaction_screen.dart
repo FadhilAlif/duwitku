@@ -56,22 +56,31 @@ class TransactionScreen extends ConsumerWidget {
         children: [
           const _FilterBar(),
           Expanded(
-            child: transactionsAsync.when(
-              data: (transactions) => categoriesAsync.when(
-                data: (categories) {
-                  final categoryMap = {for (var c in categories) c.id: c};
-                  return _FilteredTransactionList(
-                    transactions: transactions,
-                    categoryMap: categoryMap,
-                  );
-                },
+            child: RefreshIndicator(
+              onRefresh: () async {
+                ref.invalidate(filteredTransactionsStreamProvider);
+                ref.invalidate(categoriesStreamProvider);
+                // Wait a bit for the providers to refresh
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
+              child: transactionsAsync.when(
+                data: (transactions) => categoriesAsync.when(
+                  data: (categories) {
+                    final categoryMap = {for (var c in categories) c.id: c};
+                    return _FilteredTransactionList(
+                      transactions: transactions,
+                      categoryMap: categoryMap,
+                    );
+                  },
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
+                  error: (err, stack) =>
+                      Center(child: Text('Gagal memuat kategori: $err')),
+                ),
                 loading: () => const Center(child: CircularProgressIndicator()),
                 error: (err, stack) =>
-                    Center(child: Text('Gagal memuat kategori: $err')),
+                    Center(child: Text('Terjadi kesalahan: $err')),
               ),
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) =>
-                  Center(child: Text('Terjadi kesalahan: $err')),
             ),
           ),
         ],
@@ -84,10 +93,7 @@ class _ExportButton extends StatelessWidget {
   final List<t.Transaction> transactions;
   final Map<int, Category> categoryMap;
 
-  const _ExportButton({
-    required this.transactions,
-    required this.categoryMap,
-  });
+  const _ExportButton({required this.transactions, required this.categoryMap});
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +153,9 @@ class _FilterBar extends ConsumerWidget {
                   borderSide: BorderSide.none,
                 ),
                 filled: true,
-                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
+                fillColor: Theme.of(
+                  context,
+                ).colorScheme.surfaceContainerHighest,
                 contentPadding: EdgeInsets.zero,
               ),
             ),
@@ -159,8 +167,9 @@ class _FilterBar extends ConsumerWidget {
                 context: context,
                 isScrollControlled: true,
                 shape: const RoundedRectangleBorder(
-                  borderRadius:
-                      BorderRadius.vertical(top: Radius.circular(16.0)),
+                  borderRadius: BorderRadius.vertical(
+                    top: Radius.circular(16.0),
+                  ),
                 ),
                 builder: (context) => const TransactionFilterSheet(),
               );
@@ -192,10 +201,10 @@ class _FilteredTransactionList extends ConsumerWidget {
 
     final filteredTransactions = transactions.where((trx) {
       if (searchQuery.isEmpty) return true;
-      
+
       final category = categoryMap[trx.categoryId];
       return (trx.description?.toLowerCase().contains(searchQuery) ?? false) ||
-             (category?.name.toLowerCase().contains(searchQuery) ?? false);
+          (category?.name.toLowerCase().contains(searchQuery) ?? false);
     }).toList();
 
     if (filteredTransactions.isEmpty) {
@@ -222,6 +231,7 @@ class _FilteredTransactionList extends ConsumerWidget {
         ),
         Expanded(
           child: GroupedListView<t.Transaction, DateTime>(
+            physics: const AlwaysScrollableScrollPhysics(),
             elements: filteredTransactions,
             groupBy: (trx) => DateTime(
               trx.transactionDate.year,
@@ -304,7 +314,7 @@ class _TransactionListItem extends ConsumerWidget {
               await ref
                   .read(transactionRepositoryProvider)
                   .deleteTransaction(transaction.id);
-              
+
               // Force refresh not strictly needed with stream but good practice if needed
               // ref.invalidate(filteredTransactionsStreamProvider);
             } catch (e) {
@@ -337,7 +347,7 @@ class _TransactionListItem extends ConsumerWidget {
 
               if (confirm == true) {
                 try {
-                   if (context.mounted) {
+                  if (context.mounted) {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Menghapus transaksi...'),
@@ -432,21 +442,27 @@ class _EmptyState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.account_balance_wallet_outlined,
-            size: 80,
-            color: Colors.grey.shade400,
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.6,
+        child: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.account_balance_wallet_outlined,
+                size: 80,
+                color: Colors.grey.shade400,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'Belum ada transaksi nih',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            'Belum ada transaksi nih',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
-        ],
+        ),
       ),
     );
   }

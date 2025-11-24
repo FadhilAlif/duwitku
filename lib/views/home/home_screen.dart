@@ -82,43 +82,54 @@ class HomeScreen extends ConsumerWidget {
           trx.transactionDate.day == now.day;
     }).toList();
 
-    return Column(
-      children: [
-        const _MonthSelector(),
-        _SummaryCard(
-          balance: balance,
-          totalIncome: totalIncome,
-          totalExpense: totalExpense,
-          isVisible: isBalanceVisible,
-          onToggleVisibility: () =>
-              ref.read(isBalanceVisibleProvider.notifier).toggle(),
-        ),
-        _TransactionsChart(transactions: transactions),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Transaksi Terkini',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(filteredTransactionsStreamProvider);
+        ref.invalidate(categoriesStreamProvider);
+        await Future.delayed(const Duration(milliseconds: 500));
+      },
+      child: SingleChildScrollView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        child: Column(
+          children: [
+            const _MonthSelector(),
+            _SummaryCard(
+              balance: balance,
+              totalIncome: totalIncome,
+              totalExpense: totalExpense,
+              isVisible: isBalanceVisible,
+              onToggleVisibility: () =>
+                  ref.read(isBalanceVisibleProvider.notifier).toggle(),
+            ),
+            _TransactionsChart(transactions: transactions),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Transaksi Terkini',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  TextButton(
+                    onPressed: () {
+                      ref.read(bottomNavIndexProvider.notifier).setIndex(1);
+                    },
+                    child: const Text('Lihat semua'),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: () {
-                  ref.read(bottomNavIndexProvider.notifier).setIndex(1);
-                },
-                child: const Text('Lihat semua'),
+            ),
+            SizedBox(
+              height: MediaQuery.of(context).size.height * 0.4,
+              child: _TransactionList(
+                transactions: todayTransactions,
+                categoryMap: categoryMap,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
-        Expanded(
-          child: _TransactionList(
-            transactions: todayTransactions,
-            categoryMap: categoryMap,
-          ),
-        ),
-      ],
+      ),
     );
   }
 }

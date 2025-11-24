@@ -76,24 +76,32 @@ class _BudgetBody extends ConsumerWidget {
     final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
     final categoriesAsync = ref.watch(categoriesStreamProvider);
 
-    return budgetsAsync.when(
-      data: (budgets) => transactionsAsync.when(
-        data: (transactions) => categoriesAsync.when(
-          data: (categories) => budgets.isEmpty
-              ? const _EmptyState()
-              : _BudgetList(
-                  budgets: budgets,
-                  transactions: transactions,
-                  categories: categories,
-                ),
+    return RefreshIndicator(
+      onRefresh: () async {
+        ref.invalidate(budgetsStreamProvider);
+        ref.invalidate(filteredTransactionsStreamProvider);
+        ref.invalidate(categoriesStreamProvider);
+        await Future.delayed(const Duration(milliseconds: 500));
+      },
+      child: budgetsAsync.when(
+        data: (budgets) => transactionsAsync.when(
+          data: (transactions) => categoriesAsync.when(
+            data: (categories) => budgets.isEmpty
+                ? const _EmptyState()
+                : _BudgetList(
+                    budgets: budgets,
+                    transactions: transactions,
+                    categories: categories,
+                  ),
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (e, s) => Text('Error memuat kategori: $e'),
+          ),
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (e, s) => Text('Error memuat kategori: $e'),
+          error: (e, s) => Text('Error memuat transaksi: $e'),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, s) => Text('Error memuat transaksi: $e'),
+        error: (e, s) => Text('Error memuat budget: $e'),
       ),
-      loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, s) => Text('Error memuat budget: $e'),
     );
   }
 }
@@ -558,52 +566,58 @@ class _EmptyState extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(40),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.account_balance_wallet_outlined,
-                size: 80,
-                color: Colors.blue.shade400,
-              ),
-            ),
-            const SizedBox(height: 24),
-            const Text(
-              'Belum Ada Budget',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Buat budget pertama Anda untuk mengelola pengeluaran dengan lebih baik',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
-            ),
-            const SizedBox(height: 32),
-            ElevatedButton.icon(
-              onPressed: () => _showBudgetModal(context),
-              icon: const Icon(Icons.add_circle_outline),
-              label: const Text('Buat Budget Baru'),
-              style: ElevatedButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
+    return SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      child: SizedBox(
+        height: MediaQuery.of(context).size.height * 0.7,
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(32.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    Icons.account_balance_wallet_outlined,
+                    size: 80,
+                    color: Colors.blue.shade400,
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+                const SizedBox(height: 24),
+                const Text(
+                  'Belum Ada Budget',
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                 ),
-              ),
+                const SizedBox(height: 8),
+                Text(
+                  'Buat budget pertama Anda untuk mengelola pengeluaran dengan lebih baik',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 32),
+                ElevatedButton.icon(
+                  onPressed: () => _showBudgetModal(context),
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: const Text('Buat Budget Baru'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 32,
+                      vertical: 16,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 100),
+              ],
             ),
-            const SizedBox(height: 100),
-          ],
+          ),
         ),
       ),
     );
