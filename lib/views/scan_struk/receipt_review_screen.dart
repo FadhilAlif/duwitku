@@ -12,11 +12,7 @@ class ReceiptReviewScreen extends ConsumerStatefulWidget {
   final List<ReceiptItem> items;
   final String? imageUrl;
 
-  const ReceiptReviewScreen({
-    super.key,
-    required this.items,
-    this.imageUrl,
-  });
+  const ReceiptReviewScreen({super.key, required this.items, this.imageUrl});
 
   @override
   ConsumerState<ReceiptReviewScreen> createState() =>
@@ -34,13 +30,15 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
     _items = List.from(widget.items);
   }
 
+  double get _totalAmount {
+    return _items.fold(0, (sum, item) => sum + item.amount);
+  }
+
   void _addItem() {
     setState(() {
-      _items.add(ReceiptItem(
-        description: '',
-        amount: 0,
-        type: TransactionType.expense,
-      ));
+      _items.add(
+        ReceiptItem(description: '', amount: 0, type: TransactionType.expense),
+      );
     });
   }
 
@@ -105,14 +103,16 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final theme = Theme.of(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Review Transaksi'),
+        elevation: 0,
         actions: [
           if (!_isSaving)
             IconButton(
-              icon: const Icon(Icons.check),
+              icon: const Icon(Icons.check_circle),
               onPressed: _saveTransactions,
               tooltip: 'Simpan Semua',
             ),
@@ -124,64 +124,212 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
               data: (categories) {
                 return Form(
                   key: _formKey,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.only(bottom: 80),
-                    itemCount: _items.length + 1, // +1 for "Add Item" button
-                    itemBuilder: (context, index) {
-                      if (index == _items.length) {
-                        return Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: OutlinedButton.icon(
-                            onPressed: _addItem,
-                            icon: const Icon(Icons.add),
-                            label: const Text('Tambah Item'),
+                  child: Column(
+                    children: [
+                      // Total Amount Summary Card
+                      Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.all(16),
+                        padding: const EdgeInsets.all(20),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              theme.colorScheme.primaryContainer,
+                              theme.colorScheme.secondaryContainer,
+                            ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
                           ),
-                        );
-                      }
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.1,
+                              ),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.receipt_long,
+                                  color: theme.colorScheme.primary,
+                                  size: 24,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Total Transaksi',
+                                  style: theme.textTheme.titleMedium?.copyWith(
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              crossAxisAlignment: CrossAxisAlignment.end,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Rp ${_totalAmount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
+                                        style: theme.textTheme.headlineMedium
+                                            ?.copyWith(
+                                              color: theme.colorScheme.primary,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        '${_items.length} item',
+                                        style: theme.textTheme.bodyMedium
+                                            ?.copyWith(
+                                              color: theme
+                                                  .colorScheme
+                                                  .onPrimaryContainer
+                                                  .withValues(alpha: 0.7),
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        Icons.qr_code_scanner,
+                                        size: 16,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        'Scan Struk',
+                                        style: theme.textTheme.bodySmall
+                                            ?.copyWith(
+                                              color: theme.colorScheme.primary,
+                                              fontWeight: FontWeight.w600,
+                                            ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                      // Items List
+                      Expanded(
+                        child: ListView.builder(
+                          padding: const EdgeInsets.only(bottom: 16),
+                          itemCount:
+                              _items.length + 1, // +1 for "Add Item" button
+                          itemBuilder: (context, index) {
+                            if (index == _items.length) {
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 8,
+                                ),
+                                child: OutlinedButton.icon(
+                                  onPressed: _addItem,
+                                  icon: const Icon(Icons.add_circle_outline),
+                                  label: const Text('Tambah Item Baru'),
+                                  style: OutlinedButton.styleFrom(
+                                    padding: const EdgeInsets.all(16),
+                                    side: BorderSide(
+                                      color: theme.colorScheme.primary
+                                          .withValues(alpha: 0.5),
+                                      width: 1.5,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }
 
-                      final item = _items[index];
-                      return _ReceiptItemCard(
-                        key: ValueKey(item),
-                        item: item,
-                        categories: categories,
-                        onRemove: () => _removeItem(index),
-                        onUpdate: (updatedItem) {
-                          // Item is updated by reference or we could update state
-                          // Since objects are mutable here for simplicity in form
-                        },
-                      );
-                    },
+                            final item = _items[index];
+                            return _ReceiptItemCard(
+                              key: ValueKey(item),
+                              item: item,
+                              index: index,
+                              categories: categories,
+                              onRemove: () => _removeItem(index),
+                              onUpdate: (updatedItem) {
+                                setState(() {
+                                  // Trigger rebuild to update total amount
+                                });
+                              },
+                            );
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                 );
               },
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (err, _) => Center(child: Text('Error: $err')),
             ),
-      bottomSheet: Container(
+      bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: Theme.of(context).scaffoldBackgroundColor,
+          color: theme.scaffoldBackgroundColor,
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(20),
-              blurRadius: 4,
+              color: Colors.black.withValues(alpha: 0.05),
+              blurRadius: 8,
               offset: const Offset(0, -2),
             ),
           ],
         ),
         child: SafeArea(
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Total Item: ${_items.length}',
-                style: const TextStyle(fontWeight: FontWeight.bold),
+          child: FilledButton.icon(
+            onPressed: _isSaving ? null : _saveTransactions,
+            icon: _isSaving
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Icon(Icons.save),
+            label: Text(
+              _isSaving
+                  ? 'Menyimpan...'
+                  : 'Simpan ${_items.length} Transaksi (Rp ${_totalAmount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')})',
+            ),
+            style: FilledButton.styleFrom(
+              padding: const EdgeInsets.all(16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              FilledButton(
-                onPressed: _isSaving ? null : _saveTransactions,
-                child: Text(_isSaving ? 'Menyimpan...' : 'Simpan Semua'),
-              ),
-            ],
+            ),
           ),
         ),
       ),
@@ -191,6 +339,7 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
 
 class _ReceiptItemCard extends StatefulWidget {
   final ReceiptItem item;
+  final int index;
   final List<Category> categories;
   final VoidCallback onRemove;
   final ValueChanged<ReceiptItem> onUpdate;
@@ -198,6 +347,7 @@ class _ReceiptItemCard extends StatefulWidget {
   const _ReceiptItemCard({
     super.key,
     required this.item,
+    required this.index,
     required this.categories,
     required this.onRemove,
     required this.onUpdate,
@@ -228,122 +378,251 @@ class _ReceiptItemCardState extends State<_ReceiptItemCard> {
         break;
       }
     }
-    
-    // Default to 'Lainnya' or similar if available and still null? 
+
+    // Default to 'Lainnya' or similar if available and still null?
     // For now, leave as null to force user selection if no match.
   }
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(
+          color: theme.colorScheme.outline.withValues(alpha: 0.2),
+          width: 1,
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
+                Container(
+                  width: 32,
+                  height: 32,
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${widget.index + 1}',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: TextFormField(
                     initialValue: widget.item.description,
-                    decoration: const InputDecoration(labelText: 'Deskripsi'),
+                    decoration: InputDecoration(
+                      labelText: 'Deskripsi Item',
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 12,
+                      ),
+                    ),
+                    onChanged: (val) {
+                      widget.item.description = val;
+                      widget.onUpdate(widget.item);
+                    },
                     onSaved: (val) => widget.item.description = val ?? '',
                     validator: (val) =>
                         val == null || val.isEmpty ? 'Wajib diisi' : null,
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.delete, color: Colors.red),
-                  onPressed: widget.onRemove,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  flex: 2,
-                  child: TextFormField(
-                    initialValue: widget.item.amount.toStringAsFixed(0),
-                    decoration: const InputDecoration(
-                      labelText: 'Nominal',
-                      prefixText: 'Rp ',
-                    ),
-                    keyboardType: TextInputType.number,
-                    onSaved: (val) =>
-                        widget.item.amount = double.tryParse(val ?? '0') ?? 0,
-                    validator: (val) {
-                      if (val == null || val.isEmpty) return 'Wajib diisi';
-                      if (double.tryParse(val) == null) return 'Harus angka';
-                      return null;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  flex: 3,
-                  child: DropdownButtonFormField<int>(
-                    key: ValueKey(widget.item.categoryId),
-                    initialValue: widget.item.categoryId,
-                    decoration: const InputDecoration(labelText: 'Kategori'),
-                    items: widget.categories.map((category) {
-                      return DropdownMenuItem(
-                        value: category.id,
-                        child: Text(
-                          category.name,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      );
-                    }).toList(),
-                    onChanged: (val) {
-                      setState(() {
-                        widget.item.categoryId = val;
-                      });
-                    },
-                    validator: (val) => val == null ? 'Pilih kategori' : null,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                const Text('Tipe: '),
-                ChoiceChip(
-                  label: const Text('Pengeluaran'),
-                  selected: widget.item.type == TransactionType.expense,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        widget.item.type = TransactionType.expense;
-                      });
-                    }
-                  },
-                  selectedColor: Colors.red.shade100,
-                  labelStyle: TextStyle(
-                    color: widget.item.type == TransactionType.expense
-                        ? Colors.red
-                        : null,
-                  ),
-                ),
                 const SizedBox(width: 8),
-                ChoiceChip(
-                  label: const Text('Pemasukan'),
-                  selected: widget.item.type == TransactionType.income,
-                  onSelected: (selected) {
-                    if (selected) {
-                      setState(() {
-                        widget.item.type = TransactionType.income;
-                      });
-                    }
-                  },
-                  selectedColor: Colors.green.shade100,
-                  labelStyle: TextStyle(
-                    color: widget.item.type == TransactionType.income
-                        ? Colors.green
-                        : null,
+                IconButton(
+                  icon: const Icon(Icons.delete_outline),
+                  color: theme.colorScheme.error,
+                  onPressed: widget.onRemove,
+                  tooltip: 'Hapus',
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              initialValue: widget.item.amount.toStringAsFixed(0),
+              decoration: InputDecoration(
+                labelText: 'Nominal',
+                prefixText: 'Rp.',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+              keyboardType: TextInputType.number,
+              onChanged: (val) {
+                widget.item.amount = double.tryParse(val) ?? 0;
+                widget.onUpdate(widget.item);
+              },
+              onSaved: (val) =>
+                  widget.item.amount = double.tryParse(val ?? '0') ?? 0,
+              validator: (val) {
+                if (val == null || val.isEmpty) return 'Wajib diisi';
+                if (double.tryParse(val) == null) return 'Harus angka';
+                return null;
+              },
+            ),
+            const SizedBox(height: 12),
+            DropdownButtonFormField<int>(
+              key: ValueKey(widget.item.categoryId),
+              initialValue: widget.item.categoryId,
+              decoration: InputDecoration(
+                labelText: 'Kategori',
+                prefixIcon: Icon(
+                  Icons.category,
+                  color: theme.colorScheme.primary,
+                ),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 12,
+                ),
+              ),
+              items: widget.categories.map((category) {
+                return DropdownMenuItem(
+                  value: category.id,
+                  child: Text(category.name, overflow: TextOverflow.ellipsis),
+                );
+              }).toList(),
+              onChanged: (val) {
+                setState(() {
+                  widget.item.categoryId = val;
+                });
+                widget.onUpdate(widget.item);
+              },
+              validator: (val) => val == null ? 'Pilih kategori' : null,
+            ),
+            const SizedBox(height: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Tipe Transaksi',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ChoiceChip(
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.arrow_upward,
+                              size: 14,
+                              color: widget.item.type == TransactionType.expense
+                                  ? Colors.red.shade700
+                                  : theme.colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 4),
+                            const Flexible(
+                              child: Text(
+                                'Keluar',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        selected: widget.item.type == TransactionType.expense,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              widget.item.type = TransactionType.expense;
+                            });
+                            widget.onUpdate(widget.item);
+                          }
+                        },
+                        selectedColor: Colors.red.shade100,
+                        backgroundColor: theme.colorScheme.surface,
+                        labelStyle: TextStyle(
+                          color: widget.item.type == TransactionType.expense
+                              ? Colors.red.shade700
+                              : theme.colorScheme.onSurface,
+                          fontWeight:
+                              widget.item.type == TransactionType.expense
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ChoiceChip(
+                        label: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.arrow_downward,
+                              size: 14,
+                              color: widget.item.type == TransactionType.income
+                                  ? Colors.green.shade700
+                                  : theme.colorScheme.onSurfaceVariant,
+                            ),
+                            const SizedBox(width: 4),
+                            const Flexible(
+                              child: Text(
+                                'Masuk',
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                        selected: widget.item.type == TransactionType.income,
+                        onSelected: (selected) {
+                          if (selected) {
+                            setState(() {
+                              widget.item.type = TransactionType.income;
+                            });
+                            widget.onUpdate(widget.item);
+                          }
+                        },
+                        selectedColor: Colors.green.shade100,
+                        backgroundColor: theme.colorScheme.surface,
+                        labelStyle: TextStyle(
+                          color: widget.item.type == TransactionType.income
+                              ? Colors.green.shade700
+                              : theme.colorScheme.onSurface,
+                          fontWeight: widget.item.type == TransactionType.income
+                              ? FontWeight.w600
+                              : FontWeight.normal,
+                          fontSize: 13,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 6,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
