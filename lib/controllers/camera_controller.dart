@@ -86,7 +86,7 @@ class CameraNotifier extends ChangeNotifier {
       // Initialize camera controller
       _cameraController = CameraController(
         camera,
-        ResolutionPreset.high,
+        ResolutionPreset.max,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
       );
@@ -152,7 +152,7 @@ class CameraNotifier extends ChangeNotifier {
       // Initialize new controller
       _cameraController = CameraController(
         camera,
-        ResolutionPreset.high,
+        ResolutionPreset.max,
         enableAudio: false,
         imageFormatGroup: ImageFormatGroup.jpeg,
       );

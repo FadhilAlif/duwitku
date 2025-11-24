@@ -122,6 +122,9 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
           ? const Center(child: CircularProgressIndicator())
           : categoriesAsync.when(
               data: (categories) {
+                if (_items.isEmpty) {
+                  return _buildEmptyState();
+                }
                 return Form(
                   key: _formKey,
                   child: Column(
@@ -331,6 +334,60 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
               ),
             ),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.receipt_long_outlined,
+                size: 64,
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              'Struk Tidak Terbaca',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              'Kami tidak dapat menemukan item pada gambar ini. Silakan coba scan ulang atau masukkan item secara manual.',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: _addItem,
+              icon: const Icon(Icons.add),
+              label: const Text('Input Manual'),
+            ),
+            const SizedBox(height: 12),
+            OutlinedButton.icon(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(Icons.camera_alt_outlined),
+              label: const Text('Scan Ulang'),
+            ),
+          ],
         ),
       ),
     );
