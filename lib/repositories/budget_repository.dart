@@ -27,7 +27,8 @@ class BudgetRepository {
             final budgetStart = b.startDate;
             final budgetEnd = b.endDate;
             // Check for any overlap between the budget's date range and the selected month.
-            return budgetStart.isBefore(monthEnd) && budgetEnd.isAfter(monthStart);
+            return budgetStart.isBefore(monthEnd) &&
+                budgetEnd.isAfter(monthStart);
           }).toList();
         });
   }

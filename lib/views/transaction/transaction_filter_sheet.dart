@@ -194,7 +194,8 @@ class _TransactionFilterSheetState
                       ],
                     );
                   },
-                  loading: () => const Center(child: CircularProgressIndicator()),
+                  loading: () =>
+                      const Center(child: CircularProgressIndicator()),
                   error: (err, _) => Text('Error: $err'),
                 ),
               ],

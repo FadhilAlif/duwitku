@@ -76,7 +76,8 @@ class ReceiptService {
         .map((c) => "${c['id']}:${c['name']} (${c['type']})")
         .join(', ');
 
-    final prompt = '''
+    final prompt =
+        '''
       Analyze this receipt image and extract the transaction items.
       
       Available Categories (ID:Name):

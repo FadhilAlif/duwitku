@@ -13,17 +13,12 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:duwitku/models/transaction.dart' as t;
 
 final router = GoRouter(
-  refreshListenable:
-      GoRouterRefreshStream(Supabase.instance.client.auth.onAuthStateChange),
+  refreshListenable: GoRouterRefreshStream(
+    Supabase.instance.client.auth.onAuthStateChange,
+  ),
   routes: [
-    GoRoute(
-      path: '/',
-      builder: (context, state) => const SplashScreen(),
-    ),
-    GoRoute(
-      path: '/login',
-      builder: (context, state) => const LoginScreen(),
-    ),
+    GoRoute(path: '/', builder: (context, state) => const SplashScreen()),
+    GoRoute(path: '/login', builder: (context, state) => const LoginScreen()),
     GoRoute(
       path: '/register',
       builder: (context, state) => const RegisterScreen(),
@@ -61,7 +56,8 @@ final router = GoRouter(
     final isAuth = session != null;
     final isSplashing = state.matchedLocation == '/';
     final isLoggingIn =
-        state.matchedLocation == '/login' || state.matchedLocation == '/register';
+        state.matchedLocation == '/login' ||
+        state.matchedLocation == '/register';
 
     if (!isAuth && !isLoggingIn) {
       if (isSplashing) {

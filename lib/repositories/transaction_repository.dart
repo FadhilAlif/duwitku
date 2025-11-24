@@ -22,10 +22,16 @@ class TransactionRepository {
         .eq('user_id', userId)
         .order('transaction_date', ascending: false)
         .map((maps) {
-          final transactions = maps.map((map) => Transaction.fromJson(map)).toList();
+          final transactions = maps
+              .map((map) => Transaction.fromJson(map))
+              .toList();
           return transactions.where((trx) {
-            return trx.transactionDate.isAfter(startDate.subtract(const Duration(days: 1))) &&
-                   trx.transactionDate.isBefore(endDate.add(const Duration(days: 1)));
+            return trx.transactionDate.isAfter(
+                  startDate.subtract(const Duration(days: 1)),
+                ) &&
+                trx.transactionDate.isBefore(
+                  endDate.add(const Duration(days: 1)),
+                );
           }).toList();
         });
   }
@@ -81,7 +87,7 @@ class TransactionRepository {
           .order('amount', ascending: false)
           .limit(1)
           .maybeSingle();
-      
+
       if (response == null) return 0;
       return (response['amount'] as num).toDouble();
     } catch (e) {

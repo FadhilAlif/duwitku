@@ -27,10 +27,7 @@ class ProfileRepository {
         'updated_at': DateTime.now().toIso8601String(),
       };
 
-      await _supabase
-          .from('profiles')
-          .update(updateData)
-          .eq('id', profile.id);
+      await _supabase.from('profiles').update(updateData).eq('id', profile.id);
     } catch (e) {
       throw Exception('Gagal memperbarui profil: $e');
     }

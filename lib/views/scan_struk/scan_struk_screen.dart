@@ -102,7 +102,8 @@ class _ScanStrukScreenState extends State<ScanStrukScreen> {
             // Fix for Aspect Ratio to prevent "Gepeng" on tall screens like POCO X7 Pro
             LayoutBuilder(
               builder: (context, constraints) {
-                final scale = 1 /
+                final scale =
+                    1 /
                     (cameraController.value.aspectRatio *
                         constraints.maxHeight /
                         constraints.maxWidth);
@@ -110,7 +111,8 @@ class _ScanStrukScreenState extends State<ScanStrukScreen> {
                   scale: scale < 1 ? 1 / scale : scale,
                   child: Center(
                     child: CameraPreviewWidget(
-                        cameraController: cameraController),
+                      cameraController: cameraController,
+                    ),
                   ),
                 );
               },
@@ -194,16 +196,17 @@ class _ScanStrukScreenState extends State<ScanStrukScreen> {
       fit: StackFit.expand,
       children: [
         // Darkened Background with Cutout
-        CustomPaint(
-          painter: ScannerOverlayPainter(),
-        ),
+        CustomPaint(painter: ScannerOverlayPainter()),
         // Guide Text and Corners
         SafeArea(
           child: Column(
             children: [
               const SizedBox(height: 100), // Space from top controls
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(20),
@@ -233,12 +236,15 @@ class ScannerOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()..color = Colors.black.withValues(alpha: 0.5);
-    
+
     // Define the scanning area
     final scanWidth = size.width * 0.85;
     final scanHeight = size.height * 0.6;
     final scanRect = Rect.fromCenter(
-      center: Offset(size.width / 2, size.height / 2 - 40), // Slight offset upwards
+      center: Offset(
+        size.width / 2,
+        size.height / 2 - 40,
+      ), // Slight offset upwards
       width: scanWidth,
       height: scanHeight,
     );
@@ -248,8 +254,9 @@ class ScannerOverlayPainter extends CustomPainter {
       Path.combine(
         PathOperation.difference,
         Path()..addRect(Rect.fromLTWH(0, 0, size.width, size.height)),
-        Path()
-          ..addRRect(RRect.fromRectAndRadius(scanRect, const Radius.circular(16))),
+        Path()..addRRect(
+          RRect.fromRectAndRadius(scanRect, const Radius.circular(16)),
+        ),
       ),
       paint,
     );

@@ -10,9 +10,11 @@ class BottomNavIndexNotifier extends Notifier<int> {
   }
 }
 
-final bottomNavIndexProvider = NotifierProvider<BottomNavIndexNotifier, int>(() {
-  return BottomNavIndexNotifier();
-});
+final bottomNavIndexProvider = NotifierProvider<BottomNavIndexNotifier, int>(
+  () {
+    return BottomNavIndexNotifier();
+  },
+);
 
 // Visibility toggle for balance/income/expense on Home Screen
 class BalanceVisibilityNotifier extends Notifier<bool> {
@@ -24,6 +26,7 @@ class BalanceVisibilityNotifier extends Notifier<bool> {
   }
 }
 
-final isBalanceVisibleProvider = NotifierProvider<BalanceVisibilityNotifier, bool>(() {
-  return BalanceVisibilityNotifier();
-});
+final isBalanceVisibleProvider =
+    NotifierProvider<BalanceVisibilityNotifier, bool>(() {
+      return BalanceVisibilityNotifier();
+    });

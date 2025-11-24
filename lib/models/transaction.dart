@@ -1,14 +1,6 @@
-enum TransactionType {
-  income,
-  expense,
-}
+enum TransactionType { income, expense }
 
-enum SourceType {
-  app,
-  receiptScan,
-  chatPrompt,
-  initial,
-}
+enum SourceType { app, receiptScan, chatPrompt, initial }
 
 extension SourceTypeExtension on SourceType {
   String get toSnakeCase {

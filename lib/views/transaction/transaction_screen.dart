@@ -58,7 +58,7 @@ class TransactionScreen extends ConsumerWidget {
               name: 'Loading Category',
               type: CategoryType.expense,
               iconName: 'help_outline',
-            )
+            ),
           ]
         : categoriesAsync.asData?.value ?? [];
 
@@ -75,10 +75,7 @@ class TransactionScreen extends ConsumerWidget {
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
         actions: [
           if (!isLoading && transactions.isNotEmpty)
-            _ExportButton(
-              transactions: transactions,
-              categoryMap: categoryMap,
-            ),
+            _ExportButton(transactions: transactions, categoryMap: categoryMap),
         ],
       ),
       body: Column(

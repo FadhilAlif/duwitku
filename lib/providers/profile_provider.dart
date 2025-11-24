@@ -10,7 +10,7 @@ final profileRepositoryProvider = Provider<ProfileRepository>((ref) {
 final profileStreamProvider = StreamProvider.autoDispose<UserProfile>((ref) {
   final repository = ref.watch(profileRepositoryProvider);
   final user = Supabase.instance.client.auth.currentUser;
-  
+
   if (user == null) {
     throw Exception('User belum login');
   }

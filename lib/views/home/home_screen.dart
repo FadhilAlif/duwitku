@@ -49,7 +49,7 @@ class HomeScreen extends ConsumerWidget {
               name: 'Loading...',
               type: CategoryType.expense,
               iconName: 'help_outline',
-            )
+            ),
           ]
         : categoriesAsync.asData?.value ?? [];
 

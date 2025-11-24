@@ -77,7 +77,8 @@ class _BudgetBody extends ConsumerWidget {
     final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
     final categoriesAsync = ref.watch(categoriesStreamProvider);
 
-    final isLoading = budgetsAsync.isLoading ||
+    final isLoading =
+        budgetsAsync.isLoading ||
         transactionsAsync.isLoading ||
         categoriesAsync.isLoading;
 
@@ -106,7 +107,7 @@ class _BudgetBody extends ConsumerWidget {
               name: 'Loading Category',
               type: CategoryType.expense,
               iconName: 'help_outline',
-            )
+            ),
           ]
         : categoriesAsync.asData?.value ?? [];
 

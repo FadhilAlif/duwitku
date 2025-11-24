@@ -14,15 +14,9 @@ class ExportHelper {
     Map<int, Category> categoryMap,
   ) async {
     final List<List<dynamic>> rows = [];
-    
+
     // Header
-    rows.add([
-      'Tanggal',
-      'Kategori',
-      'Deskripsi',
-      'Tipe',
-      'Jumlah',
-    ]);
+    rows.add(['Tanggal', 'Kategori', 'Deskripsi', 'Tipe', 'Jumlah']);
 
     final dateFormat = DateFormat('yyyy-MM-dd HH:mm');
 
@@ -39,7 +33,9 @@ class ExportHelper {
 
     final String csvData = const ListToCsvConverter().convert(rows);
     final directory = await getTemporaryDirectory();
-    final file = File('${directory.path}/transaksi_${DateTime.now().millisecondsSinceEpoch}.csv');
+    final file = File(
+      '${directory.path}/transaksi_${DateTime.now().millisecondsSinceEpoch}.csv',
+    );
     await file.writeAsString(csvData);
 
     // ignore: deprecated_member_use
@@ -52,7 +48,11 @@ class ExportHelper {
   ) async {
     final pdf = pw.Document();
     final dateFormat = DateFormat('dd/MM/yyyy');
-    final currencyFormat = NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0);
+    final currencyFormat = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     pdf.addPage(
       pw.MultiPage(
@@ -61,7 +61,13 @@ class ExportHelper {
           return [
             pw.Header(
               level: 0,
-              child: pw.Text('Laporan Transaksi', style: pw.TextStyle(fontSize: 24, fontWeight: pw.FontWeight.bold)),
+              child: pw.Text(
+                'Laporan Transaksi',
+                style: pw.TextStyle(
+                  fontSize: 24,
+                  fontWeight: pw.FontWeight.bold,
+                ),
+              ),
             ),
             pw.SizedBox(height: 20),
             pw.TableHelper.fromTextArray(
@@ -79,7 +85,9 @@ class ExportHelper {
               }).toList(),
               border: pw.TableBorder.all(),
               headerStyle: pw.TextStyle(fontWeight: pw.FontWeight.bold),
-              headerDecoration: const pw.BoxDecoration(color: PdfColors.grey300),
+              headerDecoration: const pw.BoxDecoration(
+                color: PdfColors.grey300,
+              ),
               cellAlignment: pw.Alignment.centerLeft,
             ),
           ];
@@ -88,7 +96,9 @@ class ExportHelper {
     );
 
     final directory = await getTemporaryDirectory();
-    final file = File('${directory.path}/transaksi_${DateTime.now().millisecondsSinceEpoch}.pdf');
+    final file = File(
+      '${directory.path}/transaksi_${DateTime.now().millisecondsSinceEpoch}.pdf',
+    );
     await file.writeAsBytes(await pdf.save());
 
     // ignore: deprecated_member_use

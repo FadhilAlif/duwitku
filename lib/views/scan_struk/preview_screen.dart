@@ -26,7 +26,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
     try {
       final file = File(widget.imagePath);
-      
+
       // Execute upload and analysis in parallel for efficiency
       final results = await Future.wait([
         _receiptService.uploadReceiptImage(file),
@@ -45,13 +45,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => ReceiptReviewScreen(
-            items: items,
-            imageUrl: imageUrl,
-          ),
+          builder: (context) =>
+              ReceiptReviewScreen(items: items, imageUrl: imageUrl),
         ),
       );
-
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -92,7 +89,10 @@ class _PreviewScreenState extends State<PreviewScreen> {
                   child: InteractiveViewer(
                     minScale: 0.5,
                     maxScale: 4.0,
-                    child: Image.file(File(widget.imagePath), fit: BoxFit.contain),
+                    child: Image.file(
+                      File(widget.imagePath),
+                      fit: BoxFit.contain,
+                    ),
                   ),
                 ),
               ),
@@ -103,7 +103,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
                       ElevatedButton.icon(
-                        onPressed: _isLoading ? null : () => Navigator.pop(context),
+                        onPressed: _isLoading
+                            ? null
+                            : () => Navigator.pop(context),
                         icon: const Icon(Icons.refresh),
                         label: const Text('Ambil Ulang'),
                         style: ElevatedButton.styleFrom(

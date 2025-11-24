@@ -21,7 +21,7 @@ class ProfileHeader extends ConsumerWidget {
             email: 'user@email.com',
           )
         : profileAsync.asData?.value ??
-            UserProfile(id: 'error', displayName: 'Error', email: 'Error');
+              UserProfile(id: 'error', displayName: 'Error', email: 'Error');
 
     final user = Supabase.instance.client.auth.currentUser;
     final userEmail = profile.email ?? 'Tidak ada Email';
@@ -36,8 +36,9 @@ class ProfileHeader extends ConsumerWidget {
           children: [
             CircleAvatar(
               radius: 40,
-              backgroundImage:
-                  userAvatarUrl != null ? NetworkImage(userAvatarUrl) : null,
+              backgroundImage: userAvatarUrl != null
+                  ? NetworkImage(userAvatarUrl)
+                  : null,
               child: userAvatarUrl == null
                   ? const Icon(Icons.person, size: 40)
                   : null,

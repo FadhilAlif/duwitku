@@ -31,7 +31,6 @@ final budgetMonthProvider = NotifierProvider<BudgetMonthNotifier, DateTime>(() {
   return BudgetMonthNotifier();
 });
 
-
 // StreamProvider for budgets based on the selected month
 final budgetsStreamProvider = StreamProvider.autoDispose<List<Budget>>((ref) {
   final budgetRepository = ref.watch(budgetRepositoryProvider);

@@ -1,7 +1,4 @@
-enum CategoryType {
-  income,
-  expense,
-}
+enum CategoryType { income, expense }
 
 extension CategoryTypeExtension on String {
   CategoryType get toCategoryType {

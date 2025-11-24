@@ -17,8 +17,8 @@ class ReceiptItem {
     return ReceiptItem(
       description: json['description'] as String,
       amount: (json['amount'] as num).toDouble(),
-      type: (json['type'] as String) == 'income' 
-          ? TransactionType.income 
+      type: (json['type'] as String) == 'income'
+          ? TransactionType.income
           : TransactionType.expense,
       categoryId: json['category_id'] as int?,
     );

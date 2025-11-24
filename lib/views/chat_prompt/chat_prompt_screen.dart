@@ -6,12 +6,8 @@ class ChatPromptScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Chat Prompt'),
-      ),
-      body: const Center(
-        child: Text('Layar Chat Prompt'),
-      ),
+      appBar: AppBar(title: const Text('Chat Prompt')),
+      body: const Center(child: Text('Layar Chat Prompt')),
     );
   }
 }

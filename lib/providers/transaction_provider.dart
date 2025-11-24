@@ -70,52 +70,51 @@ class TransactionFilterNotifier extends Notifier<TransactionFilterState> {
 
 final transactionFilterProvider =
     NotifierProvider<TransactionFilterNotifier, TransactionFilterState>(() {
-  return TransactionFilterNotifier();
-});
+      return TransactionFilterNotifier();
+    });
 
 // 3. The main stream provider that watches the filter
 final filteredTransactionsStreamProvider =
     StreamProvider.autoDispose<List<Transaction>>((ref) {
-  final transactionRepository = ref.watch(transactionRepositoryProvider);
-  final filterState = ref.watch(transactionFilterProvider);
+      final transactionRepository = ref.watch(transactionRepositoryProvider);
+      final filterState = ref.watch(transactionFilterProvider);
 
-  // Get stream based on date range
-  final stream = transactionRepository.getTransactionsStream(
-    startDate: filterState.dateRange.start,
-    endDate: filterState.dateRange.end,
-  );
+      // Get stream based on date range
+      final stream = transactionRepository.getTransactionsStream(
+        startDate: filterState.dateRange.start,
+        endDate: filterState.dateRange.end,
+      );
 
-  return stream.map((transactions) {
-    return transactions.where((trx) {
-      // Filter by Category
-      if (filterState.selectedCategoryIds.isNotEmpty) {
-        if (!filterState.selectedCategoryIds.contains(trx.categoryId)) {
-          return false;
-        }
-      }
+      return stream.map((transactions) {
+        return transactions.where((trx) {
+          // Filter by Category
+          if (filterState.selectedCategoryIds.isNotEmpty) {
+            if (!filterState.selectedCategoryIds.contains(trx.categoryId)) {
+              return false;
+            }
+          }
 
-      // Filter by Amount
-      if (filterState.amountRange != null) {
-        if (trx.amount < filterState.amountRange!.start ||
-            trx.amount > filterState.amountRange!.end) {
-          return false;
-        }
-      }
+          // Filter by Amount
+          if (filterState.amountRange != null) {
+            if (trx.amount < filterState.amountRange!.start ||
+                trx.amount > filterState.amountRange!.end) {
+              return false;
+            }
+          }
 
-      // Filter by Type
-      if (filterState.selectedTypes.isNotEmpty) {
-        if (!filterState.selectedTypes.contains(trx.type)) {
-          return false;
-        }
-      }
+          // Filter by Type
+          if (filterState.selectedTypes.isNotEmpty) {
+            if (!filterState.selectedTypes.contains(trx.type)) {
+              return false;
+            }
+          }
 
-      return true;
-    }).toList();
-  });
-});
+          return true;
+        }).toList();
+      });
+    });
 
 final maxTransactionAmountProvider = FutureProvider.autoDispose<double>((ref) {
   final repository = ref.watch(transactionRepositoryProvider);
   return repository.getMaxTransactionAmount();
 });
-
