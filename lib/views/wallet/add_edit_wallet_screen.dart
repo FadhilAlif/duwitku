@@ -1,6 +1,7 @@
 import 'package:duwitku/models/wallet.dart';
 import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -26,8 +27,9 @@ class _AddEditWalletScreenState extends ConsumerState<AddEditWalletScreen> {
     super.initState();
     if (widget.wallet != null) {
       _nameController.text = widget.wallet!.name;
-      _balanceController.text =
-          widget.wallet!.initialBalance.toStringAsFixed(0);
+      _balanceController.text = widget.wallet!.initialBalance.toStringAsFixed(
+        0,
+      );
       _selectedType = widget.wallet!.type;
     }
   }
@@ -47,7 +49,12 @@ class _AddEditWalletScreenState extends ConsumerState<AddEditWalletScreen> {
     try {
       final repository = ref.read(walletRepositoryProvider);
       final name = _nameController.text.trim();
-      final balance = double.tryParse(_balanceController.text) ?? 0.0;
+      // Parse currency string (remove non-digits)
+      final balanceString = _balanceController.text.replaceAll(
+        RegExp(r'[^0-9]'),
+        '',
+      );
+      final balance = double.tryParse(balanceString) ?? 0.0;
 
       if (widget.wallet != null) {
         // Update
@@ -63,10 +70,9 @@ class _AddEditWalletScreenState extends ConsumerState<AddEditWalletScreen> {
         await repository.updateWallet(updatedWallet);
       } else {
         // Create
-        // ID and UserID will be handled by DB/Repo
         final newWallet = Wallet(
-          id: '', // Placeholder, ignored by insert logic usually
-          userId: '', // Placeholder, filled by repo
+          id: '',
+          userId: '',
           name: name,
           initialBalance: balance,
           type: _selectedType,
@@ -84,6 +90,7 @@ class _AddEditWalletScreenState extends ConsumerState<AddEditWalletScreen> {
                   ? 'Dompet berhasil diperbarui'
                   : 'Dompet berhasil ditambahkan',
             ),
+            backgroundColor: Colors.green,
           ),
         );
       }
@@ -104,26 +111,66 @@ class _AddEditWalletScreenState extends ConsumerState<AddEditWalletScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final colorScheme = theme.colorScheme;
     final isEditing = widget.wallet != null;
 
     return Scaffold(
+      backgroundColor: colorScheme.surface,
       appBar: AppBar(
-        title: Text(isEditing ? 'Edit Dompet' : 'Tambah Dompet'),
+        title: Text(
+          isEditing ? 'Edit Dompet' : 'Tambah Dompet',
+          style: const TextStyle(fontWeight: FontWeight.bold),
+        ),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(24),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              Center(
+                child: Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: _getColorForType(_selectedType).withAlpha(30),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _getIconForType(_selectedType),
+                    size: 48,
+                    color: _getColorForType(_selectedType),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Nama Dompet',
                   hintText: 'Contoh: BCA, Dompet Saku',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.account_balance_wallet),
+                  prefixIcon: const Icon(Icons.account_balance_wallet_outlined),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerHighest.withAlpha(80),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
                 ),
                 validator: (value) {
                   if (value == null || value.isEmpty) {
@@ -132,18 +179,44 @@ class _AddEditWalletScreenState extends ConsumerState<AddEditWalletScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               DropdownButtonFormField<WalletType>(
                 value: _selectedType,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Jenis Dompet',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.category),
+                  prefixIcon: const Icon(Icons.category_outlined),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerHighest.withAlpha(80),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
                 ),
                 items: WalletType.values.map((type) {
                   return DropdownMenuItem(
                     value: type,
-                    child: Text(type.displayName),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _getIconForType(type),
+                          size: 20,
+                          color: _getColorForType(type),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(type.displayName),
+                      ],
+                    ),
                   );
                 }).toList(),
                 onChanged: (value) {
@@ -152,47 +225,105 @@ class _AddEditWalletScreenState extends ConsumerState<AddEditWalletScreen> {
                   }
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               TextFormField(
                 controller: _balanceController,
-                decoration: const InputDecoration(
+                keyboardType: TextInputType.number,
+                inputFormatters: [
+                  CurrencyInputFormatter(
+                    thousandSeparator: ThousandSeparator.Period,
+                    mantissaLength: 0,
+                  ),
+                ],
+                decoration: InputDecoration(
                   labelText: 'Saldo Awal',
                   prefixText: 'Rp ',
-                  border: OutlineInputBorder(),
-                  prefixIcon: Icon(Icons.monetization_on),
+                  // prefixIcon: const Icon(Icons.monetization_on_outlined),
+                  filled: true,
+                  fillColor: colorScheme.surfaceContainerHighest.withAlpha(80),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(16),
+                    borderSide: BorderSide(
+                      color: colorScheme.primary,
+                      width: 2,
+                    ),
+                  ),
                 ),
-                keyboardType: TextInputType.number,
                 validator: (value) {
                   if (value == null || value.isEmpty) {
                     return 'Saldo awal tidak boleh kosong';
                   }
-                  if (double.tryParse(value) == null) {
-                    return 'Format angka tidak valid';
-                  }
                   return null;
                 },
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 40),
               FilledButton(
                 onPressed: _isLoading ? null : _saveWallet,
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                 ),
                 child: _isLoading
-                    ? const SizedBox(
-                        height: 20,
-                        width: 20,
+                    ? SizedBox(
+                        height: 24,
+                        width: 24,
                         child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
+                          strokeWidth: 2.5,
+                          color: colorScheme.onPrimary,
                         ),
                       )
-                    : Text(isEditing ? 'Simpan Perubahan' : 'Buat Dompet'),
+                    : Text(
+                        isEditing ? 'Simpan Perubahan' : 'Buat Dompet',
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
             ],
           ),
         ),
       ),
     );
+  }
+
+  IconData _getIconForType(WalletType type) {
+    switch (type) {
+      case WalletType.bank:
+        return Icons.account_balance_rounded;
+      case WalletType.cash:
+        return Icons.payments_rounded;
+      case WalletType.e_wallet:
+        return Icons.account_balance_wallet_rounded;
+      case WalletType.investment:
+        return Icons.trending_up_rounded;
+      case WalletType.other:
+        return Icons.category_rounded;
+    }
+  }
+
+  Color _getColorForType(WalletType type) {
+    switch (type) {
+      case WalletType.bank:
+        return Colors.blue;
+      case WalletType.cash:
+        return Colors.green;
+      case WalletType.e_wallet:
+        return Colors.purple;
+      case WalletType.investment:
+        return Colors.orange;
+      case WalletType.other:
+        return Colors.grey;
+    }
   }
 }
