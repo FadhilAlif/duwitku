@@ -9,6 +9,7 @@ import 'package:duwitku/views/scan_struk/scan_struk_screen.dart';
 import 'package:duwitku/views/splash/splash_screen.dart';
 import 'package:duwitku/views/input_phone/input_phone_screen.dart';
 import 'package:duwitku/views/transaction_form/transaction_form_screen.dart';
+import 'package:duwitku/views/voice_input/voice_input_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:duwitku/models/transaction.dart' as t;
@@ -35,6 +36,10 @@ final router = GoRouter(
     GoRoute(
       path: '/scan_struk',
       builder: (context, state) => const ScanStrukScreen(),
+    ),
+    GoRoute(
+      path: '/voice_input',
+      builder: (context, state) => const VoiceInputScreen(),
     ),
     GoRoute(
       path: '/chat_prompt',

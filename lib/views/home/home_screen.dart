@@ -520,7 +520,7 @@ class _TransactionList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (transactions.isEmpty) {
-      return const Center(child: Text('Tidak ada transaksi bulan ini.'));
+      return const Center(child: Text('Tidak ada transaksi hari ini.'));
     }
 
     final groupedTransactions = groupBy(

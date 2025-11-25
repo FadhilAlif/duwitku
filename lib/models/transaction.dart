@@ -1,6 +1,6 @@
 enum TransactionType { income, expense }
 
-enum SourceType { app, receiptScan, chatPrompt, initial }
+enum SourceType { app, receiptScan, chatPrompt, voiceInput, initial }
 
 extension SourceTypeExtension on SourceType {
   String get toSnakeCase {
@@ -11,6 +11,8 @@ extension SourceTypeExtension on SourceType {
         return 'receipt_scan';
       case SourceType.chatPrompt:
         return 'chat_prompt';
+      case SourceType.voiceInput:
+        return 'voice_input';
       case SourceType.initial:
         return 'initial';
     }
