@@ -7,6 +7,7 @@ import 'package:duwitku/views/main_navigation/main_navigation_screen.dart';
 import 'package:duwitku/views/register/register_screen.dart';
 import 'package:duwitku/views/scan_struk/scan_struk_screen.dart';
 import 'package:duwitku/views/splash/splash_screen.dart';
+import 'package:duwitku/views/input_phone/input_phone_screen.dart';
 import 'package:duwitku/views/transaction_form/transaction_form_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -50,6 +51,10 @@ final router = GoRouter(
       path: '/edit_profile',
       builder: (context, state) => const EditProfileScreen(),
     ),
+    GoRoute(
+      path: '/input_phone',
+      builder: (context, state) => const InputPhoneScreen(),
+    ),
   ],
   redirect: (context, state) {
     final session = Supabase.instance.client.auth.currentSession;
@@ -66,8 +71,8 @@ final router = GoRouter(
       return '/login';
     }
 
-    if (isAuth && (isLoggingIn || isSplashing)) {
-      return '/main';
+    if (isAuth && isLoggingIn) {
+      return '/';
     }
 
     return null;
