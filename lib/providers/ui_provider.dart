@@ -30,3 +30,18 @@ final isBalanceVisibleProvider =
     NotifierProvider<BalanceVisibilityNotifier, bool>(() {
       return BalanceVisibilityNotifier();
     });
+
+// Visibility toggle for wallet balance
+class WalletBalanceVisibilityNotifier extends Notifier<bool> {
+  @override
+  bool build() => false; // Default hidden
+
+  void toggle() {
+    state = !state;
+  }
+}
+
+final isWalletBalanceVisibleProvider =
+    NotifierProvider<WalletBalanceVisibilityNotifier, bool>(() {
+      return WalletBalanceVisibilityNotifier();
+    });

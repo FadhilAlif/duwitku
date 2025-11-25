@@ -1,4 +1,5 @@
 import 'package:duwitku/models/wallet.dart';
+import 'package:duwitku/providers/ui_provider.dart';
 import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -13,6 +14,7 @@ class WalletScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final walletsAsync = ref.watch(walletsStreamProvider);
+    final isBalanceVisible = ref.watch(isWalletBalanceVisibleProvider);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
 
@@ -76,16 +78,38 @@ class WalletScreen extends ConsumerWidget {
                   ),
                   child: Column(
                     children: [
-                      Text(
-                        'Total Aset',
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          color: Colors.white60,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Total Aset',
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              color: Colors.white60,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(
+                              isBalanceVisible
+                                  ? Icons.visibility
+                                  : Icons.visibility_off,
+                              color: Colors.white60,
+                              size: 20,
+                            ),
+                            onPressed: () => ref
+                                .read(isWalletBalanceVisibleProvider.notifier)
+                                .toggle(),
+                            visualDensity: VisualDensity.compact,
+                            padding: EdgeInsets.zero,
+                            constraints: const BoxConstraints(),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        currencyFormat.format(totalBalance),
+                        isBalanceVisible
+                            ? currencyFormat.format(totalBalance)
+                            : 'Rp ********',
                         style: theme.textTheme.headlineMedium?.copyWith(
                           color: Colors.white,
                           fontWeight: FontWeight.bold,
