@@ -39,10 +39,10 @@ Duwitku implements a multi-platform ecosystem with seamless integration between 
 ┌─────────────────────────────────────────────────────────────────┐
 │                        User Interfaces                          │
 ├─────────────────────────────────────────────────────────────────┤
-│  📱 Flutter Mobile App        │  💬 WhatsApp Bot (duwitku-bot) │
+│  📱 Flutter MobileApp        │  💬 WhatsApp Bot (duwitku-bot) │
 │  - iOS & Android              │  - WAHA API Integration         │
-│  - Web Support                │  - Natural Language Input       │
-│  - Receipt Scanning           │  - AI Auto-Categorization       │
+│  - Receipt Scanning           │  - Natural Language Input       │
+│                               │  - AI Auto-Categorization       │
 └────────────┬──────────────────┴────────────────┬────────────────┘
              │                                   │
              │         ┌─────────────────────────┘
@@ -187,7 +187,7 @@ type                TEXT CHECK (type IN ('income', 'expense'))
 description         TEXT
 transaction_date    TIMESTAMP NOT NULL
 receipt_url         TEXT
-source_type         TEXT DEFAULT 'manual'
+source_type         TEXT DEFAULT 'app'
 created_at          TIMESTAMP
 updated_at          TIMESTAMP
 ```
@@ -208,7 +208,7 @@ created_at      TIMESTAMP
 
 ## 💬 WhatsApp Bot Integration
 
-Duwitku extends beyond the mobile app with a **WhatsApp Bot** powered by AI, allowing users to log transactions through natural conversation!
+Duwitku extends beyond the mobile app with a **WhatsApp Bot** powered by Gemini AI 2.5 Flash Model, allowing users to log transactions through natural conversation!
 
 ### 🤖 [duwitku-bot](https://github.com/FadhilAlif/duwitku-bot)
 
@@ -220,14 +220,19 @@ A complementary service that enables transaction logging via WhatsApp messaging:
 - 🤖 **AI Auto-Categorization**: Gemini AI automatically categorizes transactions
 - 💬 **Conversational Interface**: No need to remember specific formats
 - 🔄 **Real-time Sync**: Instantly syncs with your Duwitku mobile app
-- 📊 **Batch Entry**: Record multiple transactions in one message
+- 📊 **Batch Entry**: Record multiple transactions in one WhatsApp Message
 
 **Example Usage:**
 
 ```text
-User: "Mie ayam 15000, bensin 50k, kopi 12k"
+User:
+Expenses 
+Mie ayam 15000
+bensin 50k
+kopi 12k
 Bot: ✅ 3 transactions recorded and categorized!
 
+Income
 User: "duwitku Gajian 5000000"
 Bot: ✅ Income recorded: Rp 5,000,000
 ```
@@ -305,8 +310,6 @@ Bot: ✅ Income recorded: Rp 5,000,000
    - **Supabase**: [Supabase Dashboard](https://app.supabase.com) → Your Project → Settings → API
    - **Google Client ID**: [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials
    - **Gemini API**: [Google AI Studio](https://makersuite.google.com/app/apikey)
-
-   > ⚠️ **Security Note**: Never commit the `.env` file to version control! It's already included in `.gitignore` to prevent accidental exposure of your API keys.
 
 4. **Run the App**
 
