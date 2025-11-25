@@ -1,8 +1,11 @@
 import 'package:duwitku/models/receipt_item.dart';
 import 'package:duwitku/models/transaction.dart';
+import 'package:duwitku/models/wallet.dart';
 import 'package:duwitku/providers/category_provider.dart';
+import 'package:duwitku/providers/profile_provider.dart';
 import 'package:duwitku/providers/transaction_provider.dart';
 import 'package:duwitku/models/category.dart';
+import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -23,11 +26,31 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
   late List<ReceiptItem> _items;
   bool _isSaving = false;
   final _formKey = GlobalKey<FormState>();
+  String? _selectedWalletId;
 
   @override
   void initState() {
     super.initState();
     _items = List.from(widget.items);
+    _initializeWallet();
+  }
+
+  Future<void> _initializeWallet() async {
+    final wallets = await ref.read(walletsStreamProvider.future);
+    final profile = await ref.read(profileStreamProvider.future);
+
+    if (wallets.isNotEmpty) {
+      if (mounted) {
+        setState(() {
+          if (profile.defaultWalletId != null &&
+              wallets.any((w) => w.id == profile.defaultWalletId)) {
+            _selectedWalletId = profile.defaultWalletId;
+          } else {
+            _selectedWalletId = wallets.first.id;
+          }
+        });
+      }
+    }
   }
 
   double get _totalAmount {
@@ -52,10 +75,18 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
     if (!_formKey.currentState!.validate()) return;
     _formKey.currentState!.save();
 
+    if (_selectedWalletId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Silakan pilih dompet')));
+      return;
+    }
+
     setState(() => _isSaving = true);
 
     try {
       final userId = 'placeholder'; // Will be set by repository
+      
       final transactions = _items.map((item) {
         if (item.categoryId == null) {
           throw Exception('Semua item harus memiliki kategori');
@@ -70,6 +101,7 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
           description: item.description,
           sourceType: SourceType.receiptScan,
           receiptImageUrl: widget.imageUrl,
+          walletId: _selectedWalletId!,
         );
       }).toList();
 
@@ -103,6 +135,7 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
   @override
   Widget build(BuildContext context) {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final walletsAsync = ref.watch(walletsStreamProvider);
     final theme = Theme.of(context);
 
     return Scaffold(
@@ -242,6 +275,46 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
                           ],
                         ),
                       ),
+                      
+                      // Wallet Selection
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: walletsAsync.when(
+                          data: (wallets) => DropdownButtonFormField<String>(
+                            value: _selectedWalletId,
+                            decoration: InputDecoration(
+                              labelText: 'Bayar Menggunakan',
+                              prefixIcon: const Icon(Icons.account_balance_wallet),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 12,
+                              ),
+                            ),
+                            items: wallets.map((wallet) {
+                              return DropdownMenuItem(
+                                value: wallet.id,
+                                child: Text(
+                                  '${wallet.name} (${wallet.type.displayName})',
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (value) {
+                              setState(() {
+                                _selectedWalletId = value;
+                              });
+                            },
+                            validator: (value) => value == null ? 'Pilih dompet' : null,
+                          ),
+                          loading: () => const LinearProgressIndicator(),
+                          error: (_, __) => const Text('Gagal memuat dompet'),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
                       // Items List
                       Expanded(
                         child: ListView.builder(

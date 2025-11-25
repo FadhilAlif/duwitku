@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:dio/dio.dart';
 import 'package:duwitku/models/receipt_item.dart';
+import 'package:duwitku/models/wallet.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
@@ -66,7 +67,7 @@ class ReceiptService {
   }
 
   // Analyze receipt using Gemini API
-  Future<List<ReceiptItem>> analyzeReceipt(File imageFile) async {
+  Future<List<ReceiptItem>> analyzeReceipt(File imageFile, List<Wallet> wallets) async {
     final apiKey = dotenv.env['GEMINI_API_KEY'];
     if (apiKey == null) throw Exception('GEMINI_API_KEY not found');
 
@@ -76,18 +77,29 @@ class ReceiptService {
         .map((c) => "${c['id']}:${c['name']} (${c['type']})")
         .join(', ');
 
+    // 2. Format Wallets for Prompt
+    final walletsString = wallets
+        .map((w) => "${w.name} (Type: ${w.type.displayName})")
+        .join(', ');
+
     final prompt =
         '''
       Analyze this receipt image and extract the transaction items.
       
       Available Categories (ID:Name):
       $categoriesString
+
+      Available Wallets (Payment Methods):
+      $walletsString
       
       Return a JSON array where each object has:
       - "description": string (item name)
       - "amount": number (price/cost)
       - "type": string ("expense" or "income")
       - "category_id": integer (Select the most appropriate ID from the available categories based on the item description. If unsure, pick the most generic one.)
+      
+      Note: Try to infer the payment method from the receipt (e.g., "BCA", "Cash", "GoPay") and match it to one of the available wallets. 
+      (Currently, the return structure only supports items, so just use this context to better understand the transaction).
     ''';
 
     try {

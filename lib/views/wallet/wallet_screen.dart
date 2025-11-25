@@ -377,7 +377,7 @@ class _WalletItem extends ConsumerWidget {
         return Icons.account_balance_rounded;
       case WalletType.cash:
         return Icons.payments_rounded;
-      case WalletType.e_wallet:
+      case WalletType.eWallet:
         return Icons.account_balance_wallet_rounded;
       case WalletType.investment:
         return Icons.trending_up_rounded;
@@ -392,7 +392,7 @@ class _WalletItem extends ConsumerWidget {
         return Colors.blue;
       case WalletType.cash:
         return Colors.green;
-      case WalletType.e_wallet:
+      case WalletType.eWallet:
         return Colors.purple;
       case WalletType.investment:
         return Colors.orange;

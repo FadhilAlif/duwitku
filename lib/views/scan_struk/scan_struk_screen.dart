@@ -51,12 +51,16 @@ class _ScanStrukScreenState extends State<ScanStrukScreen> {
   }
 
   void _navigateToPreview(String imagePath) {
+    _cameraNotifier.pauseCamera(); // Pause camera before navigating
     Navigator.push(
       context,
       MaterialPageRoute(
         builder: (context) => PreviewScreen(imagePath: imagePath),
       ),
-    );
+    ).then((_) {
+      // Resume camera when coming back
+      _cameraNotifier.resumeCamera();
+    });
   }
 
   Future<void> _handlePermissionRequest() async {

@@ -1,4 +1,4 @@
-enum WalletType { bank, cash, e_wallet, investment, other }
+enum WalletType { bank, cash, eWallet, investment, other }
 
 extension WalletTypeExtension on WalletType {
   String get toSnakeCase {
@@ -7,7 +7,7 @@ extension WalletTypeExtension on WalletType {
         return 'bank';
       case WalletType.cash:
         return 'cash';
-      case WalletType.e_wallet:
+      case WalletType.eWallet:
         return 'e_wallet';
       case WalletType.investment:
         return 'investment';
@@ -22,7 +22,7 @@ extension WalletTypeExtension on WalletType {
         return 'Bank';
       case WalletType.cash:
         return 'Tunai';
-      case WalletType.e_wallet:
+      case WalletType.eWallet:
         return 'E-Wallet';
       case WalletType.investment:
         return 'Investasi';
@@ -40,7 +40,7 @@ extension StringExtension on String {
       case 'cash':
         return WalletType.cash;
       case 'e_wallet':
-        return WalletType.e_wallet;
+        return WalletType.eWallet;
       case 'investment':
         return WalletType.investment;
       case 'other':

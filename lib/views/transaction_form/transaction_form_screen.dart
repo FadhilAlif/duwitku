@@ -1,7 +1,10 @@
 import 'package:duwitku/models/category.dart';
 import 'package:duwitku/models/transaction.dart' as t;
+import 'package:duwitku/models/wallet.dart';
 import 'package:duwitku/providers/category_provider.dart';
+import 'package:duwitku/providers/profile_provider.dart';
 import 'package:duwitku/providers/transaction_provider.dart';
+import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:duwitku/utils/icon_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
@@ -25,6 +28,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   late TextEditingController _descriptionController;
   DateTime _selectedDate = DateTime.now();
   Category? _selectedCategory;
+  Wallet? _selectedWallet;
   t.TransactionType _transactionType = t.TransactionType.expense;
   bool _showAllCategories = false;
 
@@ -60,6 +64,12 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       ).showSnackBar(const SnackBar(content: Text('Silakan pilih kategori')));
       return;
     }
+    if (_selectedWallet == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Silakan pilih dompet')));
+      return;
+    }
 
     final amount =
         double.tryParse(_amountController.text.replaceAll('.', '')) ?? 0.0;
@@ -77,6 +87,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
           type: _transactionType,
           description: description.isNotEmpty ? description : null,
           sourceType: t.SourceType.app,
+          walletId: _selectedWallet!.id,
         );
         await repo.addTransaction(newTransaction);
       } else {
@@ -90,6 +101,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
           description: description.isNotEmpty ? description : null,
           sourceType: widget.transaction!.sourceType,
           receiptImageUrl: widget.transaction!.receiptImageUrl,
+          walletId: _selectedWallet!.id,
         );
         await repo.updateTransaction(updatedTransaction);
       }
@@ -108,6 +120,61 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   Widget build(BuildContext context) {
     final isExpense = _transactionType == t.TransactionType.expense;
     final themeColor = isExpense ? Colors.red : Colors.green;
+    final walletsAsync = ref.watch(walletsStreamProvider);
+    final profileAsync = ref.watch(profileStreamProvider);
+
+    // Set default wallet logic
+    if (_selectedWallet == null) {
+       walletsAsync.whenData((wallets) {
+         if (wallets.isNotEmpty) {
+           if (widget.transaction != null) {
+              try {
+                _selectedWallet = wallets.firstWhere((w) => w.id == widget.transaction!.walletId);
+              } catch (e) {
+                // Wallet might have been deleted or not found, fallback to default or first
+                 profileAsync.whenData((profile) {
+                    if (profile.defaultWalletId != null) {
+                      try {
+                         _selectedWallet = wallets.firstWhere((w) => w.id == profile.defaultWalletId);
+                      } catch (e) {
+                         _selectedWallet = wallets.first;
+                      }
+                    } else {
+                       _selectedWallet = wallets.first;
+                    }
+                 });
+              }
+           } else {
+             // New transaction
+             profileAsync.whenData((profile) {
+               if (profile.defaultWalletId != null) {
+                 try {
+                   _selectedWallet = wallets.firstWhere((w) => w.id == profile.defaultWalletId);
+                 } catch (e) {
+                   // Default wallet not found in list (maybe deleted?)
+                   _selectedWallet = wallets.first;
+                 }
+               } else {
+                 _selectedWallet = wallets.first;
+               }
+             });
+             
+             // Fallback if profile not loaded yet or no default set
+             if (_selectedWallet == null && wallets.isNotEmpty) {
+               _selectedWallet = wallets.first;
+             }
+           }
+           
+           // Force rebuild to show selected wallet
+           if (_selectedWallet != null) {
+             // Use addPostFrameCallback to avoid setState during build
+             WidgetsBinding.instance.addPostFrameCallback((_) {
+               if (mounted) setState(() {});
+             });
+           }
+         }
+       });
+    }
 
     return Scaffold(
       appBar: AppBar(
@@ -136,6 +203,50 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Wallet Selector
+                    if (walletsAsync.asData?.value.isNotEmpty ?? false) ...[
+                      Text(
+                        'Dompet',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<Wallet>(
+                            value: _selectedWallet,
+                            isExpanded: true,
+                            hint: const Text('Pilih Dompet'),
+                            items: walletsAsync.asData!.value.map((wallet) {
+                              return DropdownMenuItem(
+                                value: wallet,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _getWalletIcon(wallet.type),
+                                      size: 20,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(wallet.name),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (wallet) {
+                              if (wallet != null) {
+                                setState(() => _selectedWallet = wallet);
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                     Text(
                       'Kategori',
                       style: Theme.of(context).textTheme.titleMedium,
@@ -182,6 +293,21 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
         ),
       ),
     );
+  }
+
+  IconData _getWalletIcon(WalletType type) {
+    switch (type) {
+      case WalletType.bank:
+        return Icons.account_balance_rounded;
+      case WalletType.cash:
+        return Icons.payments_rounded;
+      case WalletType.eWallet:
+        return Icons.account_balance_wallet_rounded;
+      case WalletType.investment:
+        return Icons.trending_up_rounded;
+      case WalletType.other:
+        return Icons.category_rounded;
+    }
   }
 }
 

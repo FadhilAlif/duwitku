@@ -38,6 +38,7 @@ class HomeScreen extends ConsumerWidget {
                   : t.TransactionType.expense,
               sourceType: t.SourceType.app,
               description: 'Loading Transaction...',
+              walletId: 'dummy_wallet_id',
             ),
           )
         : transactionsAsync.asData?.value ?? [];

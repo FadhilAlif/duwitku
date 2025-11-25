@@ -57,6 +57,7 @@ class Transaction {
   final String? description;
   final SourceType sourceType;
   final String? receiptImageUrl;
+  final String walletId;
 
   Transaction({
     required this.id,
@@ -68,6 +69,7 @@ class Transaction {
     this.description,
     required this.sourceType,
     this.receiptImageUrl,
+    required this.walletId,
   });
 
   Map<String, dynamic> toJson() {
@@ -80,6 +82,7 @@ class Transaction {
       'description': description,
       'source_type': sourceType.toSnakeCase,
       'receipt_image_url': receiptImageUrl,
+      'wallet_id': walletId,
     };
   }
 
@@ -94,6 +97,7 @@ class Transaction {
       description: json['description'] as String?,
       sourceType: (json['source_type'] as String).toSourceType,
       receiptImageUrl: json['receipt_image_url'] as String?,
+      walletId: json['wallet_id'] as String,
     );
   }
 }

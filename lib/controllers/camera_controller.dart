@@ -222,6 +222,14 @@ class CameraNotifier extends ChangeNotifier {
     _updateState(_state.copyWith(errorMessage: null));
   }
 
+  void pauseCamera() {
+    _cameraController?.pausePreview();
+  }
+
+  void resumeCamera() {
+    _cameraController?.resumePreview();
+  }
+
   @override
   void dispose() {
     _cameraController?.dispose();
