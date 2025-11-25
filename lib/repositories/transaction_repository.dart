@@ -36,6 +36,25 @@ class TransactionRepository {
         });
   }
 
+  Stream<List<Transaction>> getTransactionsByWalletStream(String walletId) {
+    final userId = _client.auth.currentUser?.id;
+    if (userId == null) {
+      throw Exception('Pengguna tidak terautentikasi');
+    }
+
+    return _client
+        .from('transactions')
+        .stream(primaryKey: ['id'])
+        .eq('user_id', userId)
+        .order('transaction_date', ascending: false)
+        .map((maps) {
+          final transactions = maps
+              .map((map) => Transaction.fromJson(map))
+              .toList();
+          return transactions.where((t) => t.walletId == walletId).toList();
+        });
+  }
+
   Future<void> addTransaction(Transaction transaction) async {
     final userId = _client.auth.currentUser?.id;
     if (userId == null) {

@@ -201,7 +201,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       // If I am using it as an uncontrolled field, 'initialValue' is correct.
                       // Let's try to use 'value' and see if I can simply ignore it or if there is a better way.
                       
-                      value: _selectedDefaultWalletId,
+                      initialValue: _selectedDefaultWalletId,
                       items: walletsAsync.asData!.value.map((wallet) {
                         return DropdownMenuItem(
                           value: wallet.id,

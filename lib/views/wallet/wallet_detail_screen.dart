@@ -1,12 +1,10 @@
 import 'package:duwitku/models/category.dart';
-import 'package:duwitku/models/wallet.dart';
 import 'package:duwitku/models/transaction.dart' as t;
+import 'package:duwitku/models/wallet.dart';
 import 'package:duwitku/providers/category_provider.dart';
 import 'package:duwitku/providers/transaction_provider.dart';
-import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:duwitku/utils/export_helper.dart';
 import 'package:duwitku/utils/icon_helper.dart';
-import 'package:duwitku/views/transaction/transaction_filter_sheet.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
@@ -15,44 +13,33 @@ import 'package:grouped_list/grouped_list.dart';
 import 'package:intl/intl.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 
-class SearchQueryNotifier extends Notifier<String> {
-  @override
-  String build() => '';
-  void setQuery(String query) => state = query;
-}
+class WalletDetailScreen extends ConsumerWidget {
+  final Wallet wallet;
 
-final searchQueryProvider = NotifierProvider<SearchQueryNotifier, String>(() {
-  return SearchQueryNotifier();
-});
-
-class TransactionScreen extends ConsumerWidget {
-  const TransactionScreen({super.key});
+  const WalletDetailScreen({super.key, required this.wallet});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
+    final transactionsAsync = ref.watch(walletTransactionsStreamProvider(wallet.id));
     final categoriesAsync = ref.watch(categoriesStreamProvider);
-    final walletsAsync = ref.watch(walletsStreamProvider);
 
-    final isLoading = transactionsAsync.isLoading ||
-        categoriesAsync.isLoading ||
-        walletsAsync.isLoading;
+    final isLoading = transactionsAsync.isLoading || categoriesAsync.isLoading;
 
     final transactions = isLoading
         ? List.generate(
-            6,
+            5,
             (index) => t.Transaction(
               id: 'dummy_$index',
               userId: 'dummy',
               categoryId: 0,
-              amount: 50000 * (index + 1).toDouble(),
+              amount: 100000,
               transactionDate: DateTime.now(),
               type: index % 2 == 0
                   ? t.TransactionType.income
                   : t.TransactionType.expense,
               sourceType: t.SourceType.app,
               description: 'Loading Transaction...',
-              walletId: 'dummy_wallet_id',
+              walletId: wallet.id,
             ),
           )
         : transactionsAsync.asData?.value ?? [];
@@ -61,39 +48,24 @@ class TransactionScreen extends ConsumerWidget {
         ? [
             Category(
               id: 0,
-              name: 'Loading Category',
+              name: 'Loading...',
               type: CategoryType.expense,
               iconName: 'help_outline',
             ),
           ]
         : categoriesAsync.asData?.value ?? [];
 
-    final wallets = isLoading
-        ? [
-            Wallet(
-              id: 'dummy_wallet_id',
-              userId: 'dummy',
-              name: 'Loading...',
-              initialBalance: 0,
-              type: WalletType.cash,
-              isActive: true,
-              createdAt: DateTime.now(),
-            ),
-          ]
-        : walletsAsync.asData?.value ?? [];
-
     final categoryMap = {for (var c in categories) c.id: c};
-    final walletMap = {for (var w in wallets) w.id: w};
+    
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'Transaksi',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        title: Text(wallet.name),
         actions: [
           if (!isLoading && transactions.isNotEmpty)
             _ExportButton(transactions: transactions, categoryMap: categoryMap),
@@ -101,22 +73,14 @@ class TransactionScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-          const _FilterBar(),
+           _WalletSummaryCard(wallet: wallet, currencyFormatter: currencyFormatter),
           Expanded(
-            child: RefreshIndicator(
-              onRefresh: () async {
-                ref.invalidate(filteredTransactionsStreamProvider);
-                ref.invalidate(categoriesStreamProvider);
-                // Wait a bit for the providers to refresh
-                await Future.delayed(const Duration(milliseconds: 500));
-              },
-              child: Skeletonizer(
-                enabled: isLoading,
-                child: _FilteredTransactionList(
-                  transactions: transactions,
-                  categoryMap: categoryMap,
-                  walletMap: walletMap,
-                ),
+            child: Skeletonizer(
+              enabled: isLoading,
+              child: _WalletTransactionList(
+                transactions: transactions,
+                categoryMap: categoryMap,
+                wallet: wallet,
               ),
             ),
           ),
@@ -126,173 +90,112 @@ class TransactionScreen extends ConsumerWidget {
   }
 }
 
-class _ExportButton extends StatelessWidget {
-  final List<t.Transaction> transactions;
-  final Map<int, Category> categoryMap;
+class _WalletSummaryCard extends StatelessWidget {
+  final Wallet wallet;
+  final NumberFormat currencyFormatter;
 
-  const _ExportButton({required this.transactions, required this.categoryMap});
-
-  @override
-  Widget build(BuildContext context) {
-    return PopupMenuButton<String>(
-      icon: const Icon(Icons.download),
-      onSelected: (value) async {
-        if (value == 'csv') {
-          await ExportHelper.exportToCsv(transactions, categoryMap);
-        } else if (value == 'pdf') {
-          await ExportHelper.exportToPdf(transactions, categoryMap);
-        }
-      },
-      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
-        const PopupMenuItem<String>(
-          value: 'csv',
-          child: Row(
-            children: [
-              Icon(Icons.description, color: Colors.green),
-              SizedBox(width: 8),
-              Text('Export CSV'),
-            ],
-          ),
-        ),
-        const PopupMenuItem<String>(
-          value: 'pdf',
-          child: Row(
-            children: [
-              Icon(Icons.picture_as_pdf, color: Colors.red),
-              SizedBox(width: 8),
-              Text('Export PDF'),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _FilterBar extends ConsumerWidget {
-  const _FilterBar();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              onChanged: (value) =>
-                  ref.read(searchQueryProvider.notifier).setQuery(value),
-              decoration: InputDecoration(
-                hintText: 'Cari transaksi...',
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(30.0),
-                  borderSide: BorderSide.none,
-                ),
-                filled: true,
-                fillColor: Theme.of(
-                  context,
-                ).colorScheme.surfaceContainerHighest,
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          FilledButton.tonal(
-            onPressed: () {
-              showModalBottomSheet(
-                context: context,
-                isScrollControlled: true,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.vertical(
-                    top: Radius.circular(16.0),
-                  ),
-                ),
-                builder: (context) => const TransactionFilterSheet(),
-              );
-            },
-            style: FilledButton.styleFrom(
-              shape: const CircleBorder(),
-              padding: const EdgeInsets.all(12),
-            ),
-            child: const Icon(Icons.tune),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FilteredTransactionList extends ConsumerWidget {
-  final List<t.Transaction> transactions;
-  final Map<int, Category> categoryMap;
-  final Map<String, Wallet> walletMap;
-
-  const _FilteredTransactionList({
-    required this.transactions,
-    required this.categoryMap,
-    required this.walletMap,
+  const _WalletSummaryCard({
+    required this.wallet,
+    required this.currencyFormatter,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final searchQuery = ref.watch(searchQueryProvider).toLowerCase();
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+               Icon(
+                  _getWalletIcon(wallet.type),
+                  color: Theme.of(context).colorScheme.onPrimaryContainer,
+               ),
+               const SizedBox(width: 12),
+               Text(
+                'Saldo Dompet',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimaryContainer.withAlpha(204),
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            currencyFormatter.format(wallet.initialBalance),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onPrimaryContainer,
+              fontSize: 28,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
 
-    final filteredTransactions = transactions.where((trx) {
-      if (searchQuery.isEmpty) return true;
+class _WalletTransactionList extends StatelessWidget {
+  final List<t.Transaction> transactions;
+  final Map<int, Category> categoryMap;
+  final Wallet wallet;
 
-      final category = categoryMap[trx.categoryId];
-      return (trx.description?.toLowerCase().contains(searchQuery) ?? false) ||
-          (category?.name.toLowerCase().contains(searchQuery) ?? false);
-    }).toList();
+  const _WalletTransactionList({
+    required this.transactions,
+    required this.categoryMap,
+    required this.wallet,
+  });
 
-    if (filteredTransactions.isEmpty) {
-      return const _EmptyState();
+  @override
+  Widget build(BuildContext context) {
+    if (transactions.isEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.receipt_long_outlined,
+              size: 64,
+              color: Colors.grey.shade400,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'Belum ada transaksi di dompet ini',
+              style: TextStyle(color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+      );
     }
 
-    final totalAmount = filteredTransactions.fold<double>(0.0, (sum, trx) {
-      if (trx.type == t.TransactionType.income) {
-        return sum + trx.amount;
-      } else {
-        return sum - trx.amount;
-      }
-    });
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-          child: Text(
-            'Menampilkan ${filteredTransactions.length} Transaksi: Total ${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ').format(totalAmount)}',
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
-        ),
-        Expanded(
-          child: GroupedListView<t.Transaction, DateTime>(
-            physics: const AlwaysScrollableScrollPhysics(),
-            elements: filteredTransactions,
-            groupBy: (trx) => DateTime(
-              trx.transactionDate.year,
-              trx.transactionDate.month,
-              trx.transactionDate.day,
-            ),
-            groupSeparatorBuilder: (DateTime date) => _ListHeader(date: date),
-            itemBuilder: (context, trx) {
-              final category = categoryMap[trx.categoryId];
-              final wallet = walletMap[trx.walletId];
-              return _TransactionListItem(
-                transaction: trx,
-                category: category,
-                wallet: wallet,
-              );
-            },
-            order: GroupedListOrder.DESC,
-            useStickyGroupSeparators: true,
-            floatingHeader: true,
-          ),
-        ),
-      ],
+    return GroupedListView<t.Transaction, DateTime>(
+      physics: const AlwaysScrollableScrollPhysics(),
+      elements: transactions,
+      groupBy: (trx) => DateTime(
+        trx.transactionDate.year,
+        trx.transactionDate.month,
+        trx.transactionDate.day,
+      ),
+      groupSeparatorBuilder: (DateTime date) => _ListHeader(date: date),
+      itemBuilder: (context, trx) {
+        final category = categoryMap[trx.categoryId];
+        return _TransactionListItem(
+          transaction: trx,
+          category: category,
+          wallet: wallet,
+        );
+      },
+      order: GroupedListOrder.DESC,
+      useStickyGroupSeparators: true,
+      floatingHeader: true,
     );
   }
 }
@@ -300,12 +203,12 @@ class _FilteredTransactionList extends ConsumerWidget {
 class _TransactionListItem extends ConsumerWidget {
   final t.Transaction transaction;
   final Category? category;
-  final Wallet? wallet;
+  final Wallet wallet;
 
   const _TransactionListItem({
     required this.transaction,
     this.category,
-    this.wallet,
+    required this.wallet,
   });
 
   @override
@@ -337,7 +240,7 @@ class _TransactionListItem extends ConsumerWidget {
         motion: const DrawerMotion(),
         dismissible: DismissiblePane(
           confirmDismiss: () async {
-            final confirm = await showDialog<bool>(
+             final confirm = await showDialog<bool>(
               context: context,
               builder: (context) => AlertDialog(
                 title: const Text('Hapus Transaksi'),
@@ -359,13 +262,10 @@ class _TransactionListItem extends ConsumerWidget {
             return confirm ?? false;
           },
           onDismissed: () async {
-            try {
+             try {
               await ref
                   .read(transactionRepositoryProvider)
                   .deleteTransaction(transaction.id);
-
-              // Force refresh not strictly needed with stream but good practice if needed
-              // ref.invalidate(filteredTransactionsStreamProvider);
             } catch (e) {
               // Error handling
             }
@@ -460,17 +360,16 @@ class _TransactionListItem extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(category?.name ?? 'Tanpa Kategori'),
-              if (wallet != null)
-                Row(
+               Row(
                   children: [
                     Icon(
-                      _getWalletIcon(wallet!.type),
+                      _getWalletIcon(wallet.type),
                       size: 12,
                       color: Colors.grey,
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      wallet!.name,
+                      wallet.name,
                       style: const TextStyle(fontSize: 12, color: Colors.grey),
                     ),
                   ],
@@ -487,21 +386,6 @@ class _TransactionListItem extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  IconData _getWalletIcon(WalletType type) {
-    switch (type) {
-      case WalletType.bank:
-        return Icons.account_balance_rounded;
-      case WalletType.cash:
-        return Icons.payments_rounded;
-      case WalletType.eWallet:
-        return Icons.account_balance_wallet_rounded;
-      case WalletType.investment:
-        return Icons.trending_up_rounded;
-      case WalletType.other:
-        return Icons.category_rounded;
-    }
   }
 }
 
@@ -521,39 +405,60 @@ class _ListHeader extends StatelessWidget {
   }
 }
 
-class _EmptyState extends StatelessWidget {
-  const _EmptyState();
+class _ExportButton extends StatelessWidget {
+  final List<t.Transaction> transactions;
+  final Map<int, Category> categoryMap;
+
+  const _ExportButton({required this.transactions, required this.categoryMap});
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      child: SizedBox(
-        height: MediaQuery.of(context).size.height * 0.6,
-        child: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
+    return PopupMenuButton<String>(
+      icon: const Icon(Icons.download),
+      onSelected: (value) async {
+        if (value == 'csv') {
+          await ExportHelper.exportToCsv(transactions, categoryMap);
+        } else if (value == 'pdf') {
+          await ExportHelper.exportToPdf(transactions, categoryMap);
+        }
+      },
+      itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+        const PopupMenuItem<String>(
+          value: 'csv',
+          child: Row(
             children: [
-              Icon(
-                Icons.account_balance_wallet_outlined,
-                size: 80,
-                color: Colors.grey.shade400,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                'Belum ada transaksi nih',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
+              Icon(Icons.description, color: Colors.green),
+              SizedBox(width: 8),
+              Text('Export CSV'),
             ],
           ),
         ),
-      ),
+        const PopupMenuItem<String>(
+          value: 'pdf',
+          child: Row(
+            children: [
+              Icon(Icons.picture_as_pdf, color: Colors.red),
+              SizedBox(width: 8),
+              Text('Export PDF'),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
 
-extension StringExtension on String {
-  String capitalize() {
-    return "${this[0].toUpperCase()}${substring(1)}";
+IconData _getWalletIcon(WalletType type) {
+  switch (type) {
+    case WalletType.bank:
+      return Icons.account_balance_rounded;
+    case WalletType.cash:
+      return Icons.payments_rounded;
+    case WalletType.eWallet:
+      return Icons.account_balance_wallet_rounded;
+    case WalletType.investment:
+      return Icons.trending_up_rounded;
+    case WalletType.other:
+      return Icons.category_rounded;
   }
 }

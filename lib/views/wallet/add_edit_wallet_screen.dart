@@ -181,7 +181,7 @@ class _AddEditWalletScreenState extends ConsumerState<AddEditWalletScreen> {
               ),
               const SizedBox(height: 20),
               DropdownButtonFormField<WalletType>(
-                value: _selectedType,
+                initialValue: _selectedType,
                 decoration: InputDecoration(
                   labelText: 'Jenis Dompet',
                   prefixIcon: const Icon(Icons.category_outlined),
@@ -311,7 +311,7 @@ class _AddEditWalletScreenState extends ConsumerState<AddEditWalletScreen> {
         return Icons.category_rounded;
     }
   }
-  
+
   Color _getColorForType(WalletType type) {
     switch (type) {
       case WalletType.bank:

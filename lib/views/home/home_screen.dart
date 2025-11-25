@@ -1,7 +1,9 @@
 import 'package:duwitku/models/category.dart';
+import 'package:duwitku/models/wallet.dart';
 import 'package:duwitku/providers/category_provider.dart';
 import 'package:duwitku/providers/transaction_provider.dart';
 import 'package:duwitku/providers/ui_provider.dart';
+import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:duwitku/models/transaction.dart' as t;
 import 'package:duwitku/utils/icon_helper.dart';
 import 'package:flutter/material.dart';
@@ -19,9 +21,12 @@ class HomeScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
     final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final walletsAsync = ref.watch(walletsStreamProvider);
     final isBalanceVisible = ref.watch(isBalanceVisibleProvider);
 
-    final isLoading = transactionsAsync.isLoading || categoriesAsync.isLoading;
+    final isLoading = transactionsAsync.isLoading ||
+        categoriesAsync.isLoading ||
+        walletsAsync.isLoading;
 
     // Generate dummy data for loading state
     final transactions = isLoading
@@ -54,7 +59,22 @@ class HomeScreen extends ConsumerWidget {
           ]
         : categoriesAsync.asData?.value ?? [];
 
+    final wallets = isLoading
+        ? [
+            Wallet(
+              id: 'dummy_wallet_id',
+              userId: 'dummy',
+              name: 'Loading...',
+              initialBalance: 0,
+              type: WalletType.cash,
+              isActive: true,
+              createdAt: DateTime.now(),
+            ),
+          ]
+        : walletsAsync.asData?.value ?? [];
+
     final categoryMap = {for (var c in categories) c.id: c};
+    final walletMap = {for (var w in wallets) w.id: w};
 
     return Scaffold(
       appBar: AppBar(
@@ -81,6 +101,7 @@ class HomeScreen extends ConsumerWidget {
           ref,
           transactions,
           categoryMap,
+          walletMap,
           isBalanceVisible,
         ),
       ),
@@ -92,6 +113,7 @@ class HomeScreen extends ConsumerWidget {
     WidgetRef ref,
     List<t.Transaction> transactions,
     Map<int, Category> categoryMap,
+    Map<String, Wallet> walletMap,
     bool isBalanceVisible,
   ) {
     final totalIncome = transactions
@@ -152,6 +174,7 @@ class HomeScreen extends ConsumerWidget {
               child: _TransactionList(
                 transactions: todayTransactions,
                 categoryMap: categoryMap,
+                walletMap: walletMap,
               ),
             ),
           ],
@@ -512,10 +535,12 @@ class _DailySummary {
 class _TransactionList extends StatelessWidget {
   final List<t.Transaction> transactions;
   final Map<int, Category> categoryMap;
+  final Map<String, Wallet> walletMap;
 
   const _TransactionList({
     required this.transactions,
     required this.categoryMap,
+    required this.walletMap,
   });
 
   @override
@@ -542,6 +567,7 @@ class _TransactionList extends StatelessWidget {
           date: date,
           transactions: dayTransactions,
           categoryMap: categoryMap,
+          walletMap: walletMap,
         );
       },
     );
@@ -552,11 +578,13 @@ class _TransactionGroup extends StatelessWidget {
   final DateTime date;
   final List<t.Transaction> transactions;
   final Map<int, Category> categoryMap;
+  final Map<String, Wallet> walletMap;
 
   const _TransactionGroup({
     required this.date,
     required this.transactions,
     required this.categoryMap,
+    required this.walletMap,
   });
 
   @override
@@ -597,6 +625,7 @@ class _TransactionGroup extends StatelessWidget {
           const Divider(height: 1),
           ...transactions.map((transaction) {
             final category = categoryMap[transaction.categoryId];
+            final wallet = walletMap[transaction.walletId];
             final isIncome = transaction.type == t.TransactionType.income;
             return ListTile(
               leading: CircleAvatar(
@@ -613,7 +642,30 @@ class _TransactionGroup extends StatelessWidget {
                 transaction.description ?? category?.name ?? 'T/A',
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
-              subtitle: Text(category?.name ?? 'Tanpa Kategori'),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(category?.name ?? 'Tanpa Kategori'),
+                  if (wallet != null)
+                    Row(
+                      children: [
+                        Icon(
+                          _getWalletIcon(wallet.type),
+                          size: 12,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          wallet.name,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
               trailing: Text(
                 '${isIncome ? '+' : '-'} ${currencyFormatter.format(transaction.amount)}',
                 style: TextStyle(
@@ -660,6 +712,21 @@ class _TransactionGroup extends StatelessWidget {
       return '+${formatter.format(total)}';
     } else {
       return formatter.format(total);
+    }
+  }
+
+  IconData _getWalletIcon(WalletType type) {
+    switch (type) {
+      case WalletType.bank:
+        return Icons.account_balance_rounded;
+      case WalletType.cash:
+        return Icons.payments_rounded;
+      case WalletType.eWallet:
+        return Icons.account_balance_wallet_rounded;
+      case WalletType.investment:
+        return Icons.trending_up_rounded;
+      case WalletType.other:
+        return Icons.category_rounded;
     }
   }
 }

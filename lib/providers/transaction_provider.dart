@@ -118,3 +118,9 @@ final maxTransactionAmountProvider = FutureProvider.autoDispose<double>((ref) {
   final repository = ref.watch(transactionRepositoryProvider);
   return repository.getMaxTransactionAmount();
 });
+
+final walletTransactionsStreamProvider =
+    StreamProvider.family.autoDispose<List<Transaction>, String>((ref, walletId) {
+  final repository = ref.watch(transactionRepositoryProvider);
+  return repository.getTransactionsByWalletStream(walletId);
+});

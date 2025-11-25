@@ -281,7 +281,7 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: walletsAsync.when(
                           data: (wallets) => DropdownButtonFormField<String>(
-                            value: _selectedWalletId,
+                            initialValue: _selectedWalletId,
                             decoration: InputDecoration(
                               labelText: 'Bayar Menggunakan',
                               prefixIcon: const Icon(Icons.account_balance_wallet),
