@@ -29,7 +29,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   DateTime _selectedDate = DateTime.now();
   TimeOfDay _selectedTime = TimeOfDay.now();
   Category? _selectedCategory;
-  Wallet? _selectedWallet;
+  String? _selectedWalletId;
   t.TransactionType _transactionType = t.TransactionType.expense;
   bool _showAllCategories = false;
   bool _isInitialized = false;
@@ -53,6 +53,61 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   }
 
   @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_isInitialized) {
+      final walletsAsync = ref.read(walletsStreamProvider);
+      final profileAsync = ref.read(profileStreamProvider);
+
+      walletsAsync.whenData((wallets) {
+        if (wallets.isNotEmpty && !_isInitialized) {
+          String? targetWalletId;
+
+          if (widget.transaction != null) {
+            // Editing existing transaction - use its wallet
+            final walletExists = wallets.any(
+              (w) => w.id == widget.transaction!.walletId,
+            );
+            if (walletExists) {
+              targetWalletId = widget.transaction!.walletId;
+            } else {
+              // Wallet not found, fallback to default or first
+              profileAsync.whenData((profile) {
+                if (profile.defaultWalletId != null &&
+                    wallets.any((w) => w.id == profile.defaultWalletId)) {
+                  targetWalletId = profile.defaultWalletId;
+                } else {
+                  targetWalletId = wallets.first.id;
+                }
+              });
+              targetWalletId ??= wallets.first.id;
+            }
+          } else {
+            // New transaction - use default wallet
+            profileAsync.whenData((profile) {
+              if (profile.defaultWalletId != null &&
+                  wallets.any((w) => w.id == profile.defaultWalletId)) {
+                targetWalletId = profile.defaultWalletId;
+              } else {
+                targetWalletId = wallets.first.id;
+              }
+            });
+            targetWalletId ??= wallets.first.id;
+          }
+
+          if (targetWalletId != null && mounted) {
+            setState(() {
+              _selectedWalletId = targetWalletId;
+              _isInitialized = true;
+            });
+          }
+        }
+      });
+    }
+  }
+
+  @override
   void dispose() {
     _amountController.dispose();
     _descriptionController.dispose();
@@ -67,7 +122,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       ).showSnackBar(const SnackBar(content: Text('Silakan pilih kategori')));
       return;
     }
-    if (_selectedWallet == null) {
+    if (_selectedWalletId == null) {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(const SnackBar(content: Text('Silakan pilih dompet')));
@@ -99,7 +154,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
           type: _transactionType,
           description: description.isNotEmpty ? description : null,
           sourceType: t.SourceType.app,
-          walletId: _selectedWallet!.id,
+          walletId: _selectedWalletId!,
         );
         await repo.addTransaction(newTransaction);
       } else {
@@ -122,7 +177,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
           description: description.isNotEmpty ? description : null,
           sourceType: widget.transaction!.sourceType,
           receiptImageUrl: widget.transaction!.receiptImageUrl,
-          walletId: _selectedWallet!.id,
+          walletId: _selectedWalletId!,
         );
         await repo.updateTransaction(updatedTransaction);
       }
@@ -142,71 +197,6 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final isExpense = _transactionType == t.TransactionType.expense;
     final themeColor = isExpense ? Colors.red : Colors.green;
     final walletsAsync = ref.watch(walletsStreamProvider);
-    final profileAsync = ref.watch(profileStreamProvider);
-
-    // Set default wallet logic - only once during first build
-    if (!_isInitialized && _selectedWallet == null) {
-      walletsAsync.whenData((wallets) {
-        if (wallets.isNotEmpty && !_isInitialized) {
-          Wallet? targetWallet;
-
-          if (widget.transaction != null) {
-            try {
-              targetWallet = wallets.firstWhere(
-                (w) => w.id == widget.transaction!.walletId,
-              );
-            } catch (e) {
-              // Wallet might have been deleted or not found, fallback to default or first
-              profileAsync.whenData((profile) {
-                if (profile.defaultWalletId != null) {
-                  try {
-                    targetWallet = wallets.firstWhere(
-                      (w) => w.id == profile.defaultWalletId,
-                    );
-                  } catch (e) {
-                    targetWallet = wallets.first;
-                  }
-                } else {
-                  targetWallet = wallets.first;
-                }
-              });
-
-              // Fallback if profile not ready
-              targetWallet ??= wallets.first;
-            }
-          } else {
-            // New transaction
-            profileAsync.whenData((profile) {
-              if (profile.defaultWalletId != null) {
-                try {
-                  targetWallet = wallets.firstWhere(
-                    (w) => w.id == profile.defaultWalletId,
-                  );
-                } catch (e) {
-                  // Default wallet not found in list (maybe deleted?)
-                  targetWallet = wallets.first;
-                }
-              } else {
-                targetWallet = wallets.first;
-              }
-            });
-
-            // Fallback if profile not loaded yet or no default set
-            targetWallet ??= wallets.first;
-          }
-
-          // Set wallet and mark as initialized - do it synchronously to avoid flicker
-          if (targetWallet != null && !_isInitialized) {
-            _selectedWallet = targetWallet;
-            _isInitialized = true;
-            // Schedule rebuild after frame to show the selected wallet
-            WidgetsBinding.instance.addPostFrameCallback((_) {
-              if (mounted) setState(() {});
-            });
-          }
-        }
-      });
-    }
 
     return Scaffold(
       appBar: AppBar(
@@ -249,13 +239,20 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                         ),
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: DropdownButtonHideUnderline(
-                          child: DropdownButton<Wallet>(
-                            value: _selectedWallet,
+                          child: DropdownButton<String>(
+                            value:
+                                _isInitialized &&
+                                    _selectedWalletId != null &&
+                                    walletsAsync.asData!.value.any(
+                                      (w) => w.id == _selectedWalletId,
+                                    )
+                                ? _selectedWalletId
+                                : null,
                             isExpanded: true,
                             hint: const Text('Pilih Dompet'),
                             items: walletsAsync.asData!.value.map((wallet) {
                               return DropdownMenuItem(
-                                value: wallet,
+                                value: wallet.id,
                                 child: Row(
                                   children: [
                                     Icon(
@@ -269,9 +266,9 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                                 ),
                               );
                             }).toList(),
-                            onChanged: (wallet) {
-                              if (wallet != null) {
-                                setState(() => _selectedWallet = wallet);
+                            onChanged: (walletId) {
+                              if (walletId != null) {
+                                setState(() => _selectedWalletId = walletId);
                               }
                             },
                           ),
