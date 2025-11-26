@@ -1,3 +1,6 @@
+import 'package:duwitku/views/voice_input/voice_input_review_screen.dart';
+import 'package:duwitku/views/scan_struk/receipt_review_screen.dart';
+import 'package:duwitku/models/receipt_item.dart';
 import 'package:duwitku/utils/go_router_refresh_stream.dart';
 import 'package:duwitku/views/manage_categories/manage_categories_screen.dart';
 import 'package:duwitku/views/chat_prompt/chat_prompt_screen.dart';
@@ -40,6 +43,22 @@ final router = GoRouter(
     GoRoute(
       path: '/scan_struk',
       builder: (context, state) => const ScanStrukScreen(),
+    ),
+    GoRoute(
+      path: '/receipt_review',
+      builder: (context, state) {
+        final args = state.extra as Map<String, dynamic>;
+        final items = args['items'] as List<ReceiptItem>;
+        final imageUrl = args['imageUrl'] as String?;
+        return ReceiptReviewScreen(items: items, imageUrl: imageUrl);
+      },
+    ),
+    GoRoute(
+      path: '/voice_input_review',
+      builder: (context, state) {
+        final items = state.extra as List<ReceiptItem>;
+        return VoiceInputReviewScreen(items: items);
+      },
     ),
     GoRoute(
       path: '/voice_input',
