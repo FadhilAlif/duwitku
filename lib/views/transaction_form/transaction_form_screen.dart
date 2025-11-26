@@ -31,6 +31,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   Wallet? _selectedWallet;
   t.TransactionType _transactionType = t.TransactionType.expense;
   bool _showAllCategories = false;
+  bool _isInitialized = false;
 
   @override
   void initState() {
@@ -123,57 +124,68 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     final walletsAsync = ref.watch(walletsStreamProvider);
     final profileAsync = ref.watch(profileStreamProvider);
 
-    // Set default wallet logic
-    if (_selectedWallet == null) {
-       walletsAsync.whenData((wallets) {
-         if (wallets.isNotEmpty) {
-           if (widget.transaction != null) {
-              try {
-                _selectedWallet = wallets.firstWhere((w) => w.id == widget.transaction!.walletId);
-              } catch (e) {
-                // Wallet might have been deleted or not found, fallback to default or first
-                 profileAsync.whenData((profile) {
-                    if (profile.defaultWalletId != null) {
-                      try {
-                         _selectedWallet = wallets.firstWhere((w) => w.id == profile.defaultWalletId);
-                      } catch (e) {
-                         _selectedWallet = wallets.first;
-                      }
-                    } else {
-                       _selectedWallet = wallets.first;
-                    }
-                 });
+    // Set default wallet logic - only once during first build
+    if (!_isInitialized && _selectedWallet == null) {
+      walletsAsync.whenData((wallets) {
+        if (wallets.isNotEmpty && !_isInitialized) {
+          Wallet? targetWallet;
+
+          if (widget.transaction != null) {
+            try {
+              targetWallet = wallets.firstWhere(
+                (w) => w.id == widget.transaction!.walletId,
+              );
+            } catch (e) {
+              // Wallet might have been deleted or not found, fallback to default or first
+              profileAsync.whenData((profile) {
+                if (profile.defaultWalletId != null) {
+                  try {
+                    targetWallet = wallets.firstWhere(
+                      (w) => w.id == profile.defaultWalletId,
+                    );
+                  } catch (e) {
+                    targetWallet = wallets.first;
+                  }
+                } else {
+                  targetWallet = wallets.first;
+                }
+              });
+
+              // Fallback if profile not ready
+              targetWallet ??= wallets.first;
+            }
+          } else {
+            // New transaction
+            profileAsync.whenData((profile) {
+              if (profile.defaultWalletId != null) {
+                try {
+                  targetWallet = wallets.firstWhere(
+                    (w) => w.id == profile.defaultWalletId,
+                  );
+                } catch (e) {
+                  // Default wallet not found in list (maybe deleted?)
+                  targetWallet = wallets.first;
+                }
+              } else {
+                targetWallet = wallets.first;
               }
-           } else {
-             // New transaction
-             profileAsync.whenData((profile) {
-               if (profile.defaultWalletId != null) {
-                 try {
-                   _selectedWallet = wallets.firstWhere((w) => w.id == profile.defaultWalletId);
-                 } catch (e) {
-                   // Default wallet not found in list (maybe deleted?)
-                   _selectedWallet = wallets.first;
-                 }
-               } else {
-                 _selectedWallet = wallets.first;
-               }
-             });
-             
-             // Fallback if profile not loaded yet or no default set
-             if (_selectedWallet == null && wallets.isNotEmpty) {
-               _selectedWallet = wallets.first;
-             }
-           }
-           
-           // Force rebuild to show selected wallet
-           if (_selectedWallet != null) {
-             // Use addPostFrameCallback to avoid setState during build
-             WidgetsBinding.instance.addPostFrameCallback((_) {
-               if (mounted) setState(() {});
-             });
-           }
-         }
-       });
+            });
+
+            // Fallback if profile not loaded yet or no default set
+            targetWallet ??= wallets.first;
+          }
+
+          // Set wallet and mark as initialized - do it synchronously to avoid flicker
+          if (targetWallet != null && !_isInitialized) {
+            _selectedWallet = targetWallet;
+            _isInitialized = true;
+            // Schedule rebuild after frame to show the selected wallet
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (mounted) setState(() {});
+            });
+          }
+        }
+      });
     }
 
     return Scaffold(
@@ -432,17 +444,19 @@ class _CategoryGrid extends ConsumerWidget {
             .where((c) => c.type.name == transactionType.name)
             .toList();
 
+        // Initialize category for edit transaction only once
         if (initialTransaction != null && selectedCategory == null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            try {
-              final initialCategory = categories.firstWhere(
-                (c) => c.id == initialTransaction!.categoryId,
-              );
+          try {
+            final initialCategory = categories.firstWhere(
+              (c) => c.id == initialTransaction!.categoryId,
+            );
+            // Set immediately instead of using callback to prevent flicker
+            WidgetsBinding.instance.addPostFrameCallback((_) {
               onCategorySelected(initialCategory);
-            } catch (e) {
-              // ignore
-            }
-          });
+            });
+          } catch (e) {
+            // Category not found, ignore
+          }
         }
 
         final itemsToShow = showAll
