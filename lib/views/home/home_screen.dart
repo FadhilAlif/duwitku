@@ -26,12 +26,14 @@ class HomeScreen extends ConsumerWidget {
     );
     final categoriesAsync = ref.watch(categoriesStreamProvider);
     final walletsAsync = ref.watch(walletsStreamProvider);
+    final totalAssetsAsync = ref.watch(totalAssetsProvider);
     final isBalanceVisible = ref.watch(isBalanceVisibleProvider);
 
     final isLoading =
         transactionsAsync.isLoading ||
         categoriesAsync.isLoading ||
         walletsAsync.isLoading ||
+        totalAssetsAsync.isLoading ||
         previousTransactionsAsync.isLoading;
 
     // Generate dummy data for loading state
@@ -137,6 +139,7 @@ class HomeScreen extends ConsumerWidget {
           categoryMap,
           walletMap,
           isBalanceVisible,
+          totalAssetsAsync.asData?.value ?? 0,
         ),
       ),
     );
@@ -150,6 +153,7 @@ class HomeScreen extends ConsumerWidget {
     Map<int, Category> categoryMap,
     Map<String, Wallet> walletMap,
     bool isBalanceVisible,
+    double totalAssets,
   ) {
     final totalIncome = transactions
         .where((trx) => trx.type == t.TransactionType.income)
@@ -157,7 +161,6 @@ class HomeScreen extends ConsumerWidget {
     final totalExpense = transactions
         .where((trx) => trx.type == t.TransactionType.expense)
         .fold(0.0, (sum, item) => sum + item.amount);
-    final balance = totalIncome - totalExpense;
 
     // Calculate previous month expense for percentage
     final prevTotalExpense = previousTransactions
@@ -193,7 +196,7 @@ class HomeScreen extends ConsumerWidget {
           children: [
             const _MonthSelector(),
             _SummaryCard(
-              balance: balance,
+              totalAssets: totalAssets,
               totalIncome: totalIncome,
               totalExpense: totalExpense,
               percentageChange: percentageChange,
@@ -276,7 +279,7 @@ class _MonthSelector extends ConsumerWidget {
 }
 
 class _SummaryCard extends StatelessWidget {
-  final double balance;
+  final double totalAssets;
   final double totalIncome;
   final double totalExpense;
   final double percentageChange;
@@ -284,7 +287,7 @@ class _SummaryCard extends StatelessWidget {
   final VoidCallback onToggleVisibility;
 
   const _SummaryCard({
-    required this.balance,
+    required this.totalAssets,
     required this.totalIncome,
     required this.totalExpense,
     required this.percentageChange,
@@ -436,8 +439,8 @@ class _SummaryCard extends StatelessWidget {
               ),
               _SummaryItem(
                 icon: Icons.account_balance_wallet_outlined,
-                title: 'Sisa Saldo',
-                amount: balance,
+                title: 'Total Aset',
+                amount: totalAssets,
                 color: Colors.white,
                 formatter: currencyFormatter,
                 isVisible: isVisible,

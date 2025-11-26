@@ -298,6 +298,12 @@ class _TotalSpendingCard extends StatelessWidget {
     required this.totalExpense,
   });
 
+  String _calculatePercentage(double value, double total) {
+    if (total == 0) return '0.0';
+    final percentage = (value / total) * 100;
+    return percentage.toStringAsFixed(1);
+  }
+
   @override
   Widget build(BuildContext context) {
     final currencyFormatter = NumberFormat.currency(
@@ -328,39 +334,63 @@ class _TotalSpendingCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Pemasukan',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    Text(
-                      currencyFormatter.format(totalIncome),
-                      style: const TextStyle(
-                        color: Colors.green,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Pemasukan',
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        currencyFormatter.format(totalIncome),
+                        style: const TextStyle(
+                          color: Colors.green,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${_calculatePercentage(totalIncome, totalIncome + totalExpense)}%',
+                        style: TextStyle(
+                          color: Colors.green.shade300,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    const Text(
-                      'Pengeluaran',
-                      style: TextStyle(color: Colors.grey),
-                    ),
-                    Text(
-                      currencyFormatter.format(totalExpense),
-                      style: const TextStyle(
-                        color: Colors.red,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      const Text(
+                        'Pengeluaran',
+                        style: TextStyle(color: Colors.grey, fontSize: 12),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 4),
+                      Text(
+                        currencyFormatter.format(totalExpense),
+                        style: const TextStyle(
+                          color: Colors.red,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${_calculatePercentage(totalExpense, totalIncome + totalExpense)}%',
+                        style: TextStyle(
+                          color: Colors.red.shade300,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
