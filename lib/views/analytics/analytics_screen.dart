@@ -196,13 +196,291 @@ class _LoadingPlaceholder extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final shimmerBaseColor = isDark ? Colors.grey[800]! : Colors.grey[200]!;
+    final shimmerHighlightColor = isDark ? Colors.grey[700]! : Colors.grey[50]!;
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Container(height: 200, color: Colors.grey[300]),
+        // Tren section header skeleton
+        Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: shimmerBaseColor,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 200,
+              height: 16,
+              decoration: BoxDecoration(
+                color: shimmerBaseColor,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        // Legend skeleton
+        Row(
+          children: [
+            Container(
+              width: 100,
+              height: 12,
+              decoration: BoxDecoration(
+                color: shimmerBaseColor,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Container(
+              width: 100,
+              height: 12,
+              decoration: BoxDecoration(
+                color: shimmerBaseColor,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
-        Container(height: 100, color: Colors.grey[300]),
+        // Chart skeleton
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            height: 250,
+            padding: const EdgeInsets.all(16),
+            child: Container(
+              decoration: BoxDecoration(
+                color: shimmerBaseColor,
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        // Total Ringkasan Card skeleton
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        color: shimmerBaseColor,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      width: 120,
+                      height: 16,
+                      decoration: BoxDecoration(
+                        color: shimmerBaseColor,
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: shimmerBaseColor,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: 100,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: shimmerBaseColor,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Container(
+                            width: 80,
+                            height: 12,
+                            decoration: BoxDecoration(
+                              color: shimmerBaseColor,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Container(
+                            width: 100,
+                            height: 16,
+                            decoration: BoxDecoration(
+                              color: shimmerBaseColor,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 24),
+        // Smart Overview section header skeleton
+        Row(
+          children: [
+            Container(
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                color: shimmerBaseColor,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Container(
+              width: 150,
+              height: 16,
+              decoration: BoxDecoration(
+                color: shimmerBaseColor,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ],
+        ),
         const SizedBox(height: 16),
-        Container(height: 200, color: Colors.grey[300]),
+        // Donut chart skeleton
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Container(
+            height: 450,
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                Container(
+                  width: 100,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: shimmerBaseColor,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  height: 200,
+                  decoration: BoxDecoration(
+                    color: shimmerBaseColor,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: 5,
+                    itemBuilder: (context, index) {
+                      return Container(
+                        margin: const EdgeInsets.only(bottom: 8),
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: shimmerHighlightColor,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              width: 12,
+                              height: 12,
+                              decoration: BoxDecoration(
+                                color: shimmerBaseColor,
+                                shape: BoxShape.circle,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Container(
+                              width: 20,
+                              height: 20,
+                              decoration: BoxDecoration(
+                                color: shimmerBaseColor,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    width: 100,
+                                    height: 14,
+                                    decoration: BoxDecoration(
+                                      color: shimmerBaseColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    width: 80,
+                                    height: 11,
+                                    decoration: BoxDecoration(
+                                      color: shimmerBaseColor,
+                                      borderRadius: BorderRadius.circular(4),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Container(
+                              width: 80,
+                              height: 13,
+                              decoration: BoxDecoration(
+                                color: shimmerBaseColor,
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -233,9 +511,15 @@ class _AnalyticsContent extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Tren Pemasukan & Pengeluaran',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Row(
+          children: [
+            const Icon(Icons.show_chart, size: 20, color: Color(0xFF14894e)),
+            const SizedBox(width: 8),
+            const Text(
+              'Tren Pemasukan & Pengeluaran',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         // Legend
@@ -247,12 +531,22 @@ class _AnalyticsContent extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 250,
-          child: _IncomeExpenseLineChart(
-            transactions: transactions,
-            filter: filter,
-            selectedMonth: selectedMonth,
+        Card(
+          elevation: 2,
+          clipBehavior: Clip.none,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SizedBox(
+              height: 250,
+              child: _IncomeExpenseLineChart(
+                transactions: transactions,
+                filter: filter,
+                selectedMonth: selectedMonth,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 24),
@@ -261,22 +555,43 @@ class _AnalyticsContent extends StatelessWidget {
           totalExpense: totalExpense,
         ),
         const SizedBox(height: 24),
-        const Text(
-          'Smart Overview',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Row(
+          children: [
+            const Icon(Icons.pie_chart, size: 20, color: Color(0xFF14894e)),
+            const SizedBox(width: 8),
+            const Text(
+              'Smart Overview',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
-        SizedBox(
-          height: 300,
-          child: _SmartOverviewPieChart(
-            transactions: transactions,
-            categories: categories,
+        Card(
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: SizedBox(
+              height: 450,
+              child: _SmartOverviewPieChart(
+                transactions: transactions,
+                categories: categories,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 24),
-        const Text(
-          'Top Transaksi',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+        Row(
+          children: [
+            const Icon(Icons.trending_up, size: 20, color: Color(0xFF14894e)),
+            const SizedBox(width: 8),
+            const Text(
+              'Top Transaksi',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         _TopTransactionsSection(
@@ -524,13 +839,21 @@ class _IncomeExpenseLineChart extends StatelessWidget {
                 )
                 .toList(),
             isCurved: true,
-            color: Colors.green,
+            curveSmoothness: 0.4,
+            color: const Color(0xFF4CAF50),
             barWidth: 3,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(
               show: true,
-              color: Colors.green.withAlpha(25),
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF4CAF50).withAlpha(100),
+                  const Color(0xFF4CAF50).withAlpha(0),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
             ),
           ),
           LineChartBarData(
@@ -545,36 +868,94 @@ class _IncomeExpenseLineChart extends StatelessWidget {
                 )
                 .toList(),
             isCurved: true,
-            color: Colors.red,
+            curveSmoothness: 0.4,
+            color: const Color(0xFFEF5350),
             barWidth: 3,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
             belowBarData: BarAreaData(
               show: true,
-              color: Colors.red.withAlpha(25),
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFEF5350).withAlpha(100),
+                  const Color(0xFFEF5350).withAlpha(0),
+                ],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
             ),
           ),
         ],
         lineTouchData: LineTouchData(
+          enabled: true,
+          handleBuiltInTouches: true,
           touchTooltipData: LineTouchTooltipData(
-            getTooltipColor: (touchedSpot) => Colors.blueGrey.withAlpha(204),
+            tooltipPadding: const EdgeInsets.symmetric(
+              horizontal: 12,
+              vertical: 8,
+            ),
+            tooltipMargin: -40,
+            fitInsideHorizontally: true,
+            fitInsideVertically: true,
+            getTooltipColor: (touchedSpot) => Colors.black87,
             getTooltipItems: (touchedSpots) {
-              return touchedSpots.map((LineBarSpot touchedSpot) {
-                final textStyle = TextStyle(
-                  color: touchedSpot.bar.color,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
-                );
-                final currencyFormatter = NumberFormat.compactSimpleCurrency(
-                  locale: 'id_ID',
-                );
+              if (touchedSpots.isEmpty) return [];
+
+              // Get the first spot to determine the index
+              final spotIndex = touchedSpots[0].spotIndex;
+              if (spotIndex >= dataPoints.length) return [];
+
+              final dataPoint = dataPoints[spotIndex];
+              final dateStr = DateFormat(
+                'd MMM',
+                'id_ID',
+              ).format(dataPoint.date);
+              final currencyFormatter = NumberFormat.currency(
+                locale: 'id_ID',
+                symbol: 'Rp ',
+                decimalDigits: 0,
+              );
+
+              // Return tooltip items for both lines
+              return touchedSpots.map((spot) {
+                final isIncome = spot.barIndex == 0;
                 return LineTooltipItem(
-                  '${touchedSpot.barIndex == 0 ? "Pemasukan" : "Pengeluaran"}\n${currencyFormatter.format(touchedSpot.y)}',
-                  textStyle,
+                  isIncome
+                      ? '$dateStr\n🟢 ${currencyFormatter.format(dataPoint.income)}'
+                      : '🔴 ${currencyFormatter.format(dataPoint.expense)}',
+                  TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: isIncome ? 13 : 12,
+                  ),
                 );
               }).toList();
             },
           ),
+          touchSpotThreshold: 30,
+          getTouchedSpotIndicator:
+              (LineChartBarData barData, List<int> spotIndexes) {
+                return spotIndexes.map((spotIndex) {
+                  return TouchedSpotIndicatorData(
+                    const FlLine(
+                      color: Colors.grey,
+                      strokeWidth: 1,
+                      dashArray: [5, 5],
+                    ),
+                    FlDotData(
+                      show: true,
+                      getDotPainter: (spot, percent, barData, index) {
+                        return FlDotCirclePainter(
+                          radius: 4,
+                          color: Colors.white,
+                          strokeWidth: 2,
+                          strokeColor: barData.color ?? Colors.grey,
+                        );
+                      },
+                    ),
+                  );
+                }).toList();
+              },
         ),
       ),
     );
@@ -681,15 +1062,22 @@ class _SmartOverviewPieChartState extends State<_SmartOverviewPieChart> {
                 ),
               ],
               onChanged: (val) {
-                if (val != null) setState(() => _showByIncome = val);
+                if (val != null) {
+                  setState(() {
+                    _showByIncome = val;
+                    _touchedIndex = -1;
+                  });
+                }
               },
               isDense: true,
               underline: Container(),
             ),
           ],
         ),
-        Expanded(
-          child: _CategoryPieChart(
+        const SizedBox(height: 16),
+        SizedBox(
+          height: 200,
+          child: _CategoryDonutChart(
             transactions: widget.transactions,
             categories: widget.categories,
             isIncome: _showByIncome,
@@ -697,19 +1085,31 @@ class _SmartOverviewPieChartState extends State<_SmartOverviewPieChart> {
             onTouch: (index) => setState(() => _touchedIndex = index),
           ),
         ),
+        const SizedBox(height: 16),
+        Expanded(
+          child: _CategoryListView(
+            transactions: widget.transactions,
+            categories: widget.categories,
+            isIncome: _showByIncome,
+            touchedIndex: _touchedIndex,
+            onItemTap: (index) => setState(() {
+              _touchedIndex = _touchedIndex == index ? -1 : index;
+            }),
+          ),
+        ),
       ],
     );
   }
 }
 
-class _CategoryPieChart extends StatelessWidget {
+class _CategoryDonutChart extends StatelessWidget {
   final List<Transaction> transactions;
   final List<Category> categories;
   final bool isIncome;
   final int touchedIndex;
   final Function(int) onTouch;
 
-  const _CategoryPieChart({
+  const _CategoryDonutChart({
     required this.transactions,
     required this.categories,
     required this.isIncome,
@@ -717,151 +1117,301 @@ class _CategoryPieChart extends StatelessWidget {
     required this.onTouch,
   });
 
-  @override
-  Widget build(BuildContext context) {
+  // Modern pastel color palette
+  static const List<Color> _pastelColors = [
+    Color(0xFFFF6B9D), // Pink
+    Color(0xFFFFA07A), // Light Salmon
+    Color(0xFFFFD93D), // Yellow
+    Color(0xFF6BCF7F), // Green
+    Color(0xFF4D96FF), // Blue
+    Color(0xFFA78BFA), // Purple
+    Color(0xFFFF9B9B), // Light Red
+    Color(0xFF72DDF7), // Light Blue
+    Color(0xFFFFB7C3), // Light Pink
+    Color(0xFFFFC898), // Peach
+  ];
+
+  List<_CategoryData> _processData() {
     final type = isIncome ? TransactionType.income : TransactionType.expense;
     final filteredTrx = transactions.where((t) => t.type == type).toList();
 
-    if (filteredTrx.isEmpty) {
-      return const Center(child: Text('Belum ada data kategori.'));
-    }
+    if (filteredTrx.isEmpty) return [];
 
-    // Group by Category
     final categoryMap = {for (var c in categories) c.id: c};
     final grouped = groupBy(filteredTrx, (t) => t.categoryId);
 
-    final totalAmount = filteredTrx.fold(0.0, (sum, t) => sum + t.amount);
-
-    final data = grouped.entries.map((e) {
+    var data = grouped.entries.map((e) {
       final catId = e.key;
       final amount = e.value.fold(0.0, (sum, t) => sum + t.amount);
       final category = categoryMap[catId];
       return _CategoryData(
+        categoryId: catId,
         name: category?.name ?? 'Lainnya',
         amount: amount,
-        color:
-            Colors.primaries[catId %
-                Colors.primaries.length], // Simple color assignment
+        color: _pastelColors[catId % _pastelColors.length],
         icon: category?.iconName ?? 'help_outline',
       );
     }).toList()..sort((a, b) => b.amount.compareTo(a.amount));
 
-    return Row(
-      children: [
-        Expanded(
-          child: PieChart(
-            PieChartData(
-              pieTouchData: PieTouchData(
-                touchCallback: (FlTouchEvent event, pieTouchResponse) {
-                  if (!event.isInterestedForInteractions ||
-                      pieTouchResponse == null ||
-                      pieTouchResponse.touchedSection == null) {
-                    onTouch(-1);
-                    return;
-                  }
-                  onTouch(pieTouchResponse.touchedSection!.touchedSectionIndex);
-                },
-              ),
-              borderData: FlBorderData(show: false),
-              sectionsSpace: 0,
-              centerSpaceRadius: 40,
-              sections: List.generate(data.length, (i) {
-                final isTouched = i == touchedIndex;
-                final fontSize = isTouched ? 16.0 : 12.0;
-                final radius = isTouched ? 60.0 : 50.0;
-                final item = data[i];
-                final percentage = (item.amount / totalAmount * 100)
-                    .toStringAsFixed(0);
+    // Combine categories beyond top 5 into "Lainnya"
+    if (data.length > 5) {
+      final top5 = data.take(5).toList();
+      final others = data.skip(5).toList();
+      final othersTotal = others.fold(0.0, (sum, item) => sum + item.amount);
 
-                return PieChartSectionData(
-                  color: item.color,
-                  value: item.amount,
-                  title: '$percentage%',
-                  radius: radius,
-                  titleStyle: TextStyle(
-                    fontSize: fontSize,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                );
-              }),
-            ),
+      if (othersTotal > 0) {
+        top5.add(
+          _CategoryData(
+            categoryId: -1,
+            name: 'Lainnya',
+            amount: othersTotal,
+            color: Colors.grey.shade400,
+            icon: 'more_horiz',
           ),
+        );
+      }
+      return top5;
+    }
+
+    return data;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final data = _processData();
+
+    if (data.isEmpty) {
+      return const Center(child: Text('Belum ada data kategori.'));
+    }
+
+    final totalAmount = data.fold(0.0, (sum, item) => sum + item.amount);
+
+    return PieChart(
+      PieChartData(
+        pieTouchData: PieTouchData(
+          touchCallback: (FlTouchEvent event, pieTouchResponse) {
+            if (!event.isInterestedForInteractions ||
+                pieTouchResponse == null ||
+                pieTouchResponse.touchedSection == null) {
+              onTouch(-1);
+              return;
+            }
+            onTouch(pieTouchResponse.touchedSection!.touchedSectionIndex);
+          },
         ),
-        const SizedBox(width: 16),
-        // Legend/Details Column
-        if (touchedIndex != -1 && touchedIndex < data.length)
-          Expanded(
-            child: _PieDetails(
-              data: data[touchedIndex],
-              totalAmount: totalAmount,
+        borderData: FlBorderData(show: false),
+        sectionsSpace: 2,
+        centerSpaceRadius: 60,
+        sections: List.generate(data.length, (i) {
+          final isTouched = i == touchedIndex;
+          final radius = isTouched ? 50.0 : 42.0;
+          final item = data[i];
+          final percentage = (item.amount / totalAmount * 100).toStringAsFixed(
+            1,
+          );
+
+          return PieChartSectionData(
+            color: item.color,
+            value: item.amount,
+            title: isTouched ? '$percentage%' : '',
+            radius: radius,
+            titleStyle: TextStyle(
+              fontSize: isTouched ? 14 : 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+              shadows: isTouched
+                  ? [
+                      const Shadow(
+                        color: Colors.black26,
+                        offset: Offset(1, 1),
+                        blurRadius: 2,
+                      ),
+                    ]
+                  : null,
             ),
-          )
-        else
-          const Expanded(
-            child: Center(
-              child: Text(
-                'Sentuh chart untuk detail',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
-              ),
-            ),
-          ),
-      ],
+          );
+        }),
+      ),
     );
   }
 }
 
-class _PieDetails extends StatelessWidget {
-  final _CategoryData data;
-  final double totalAmount;
+class _CategoryListView extends StatelessWidget {
+  final List<Transaction> transactions;
+  final List<Category> categories;
+  final bool isIncome;
+  final int touchedIndex;
+  final Function(int) onItemTap;
 
-  const _PieDetails({required this.data, required this.totalAmount});
+  const _CategoryListView({
+    required this.transactions,
+    required this.categories,
+    required this.isIncome,
+    required this.touchedIndex,
+    required this.onItemTap,
+  });
+
+  List<_CategoryData> _processData() {
+    final type = isIncome ? TransactionType.income : TransactionType.expense;
+    final filteredTrx = transactions.where((t) => t.type == type).toList();
+
+    if (filteredTrx.isEmpty) return [];
+
+    final categoryMap = {for (var c in categories) c.id: c};
+    final grouped = groupBy(filteredTrx, (t) => t.categoryId);
+
+    var data = grouped.entries.map((e) {
+      final catId = e.key;
+      final amount = e.value.fold(0.0, (sum, t) => sum + t.amount);
+      final category = categoryMap[catId];
+      return _CategoryData(
+        categoryId: catId,
+        name: category?.name ?? 'Lainnya',
+        amount: amount,
+        color: _CategoryDonutChart
+            ._pastelColors[catId % _CategoryDonutChart._pastelColors.length],
+        icon: category?.iconName ?? 'help_outline',
+      );
+    }).toList()..sort((a, b) => b.amount.compareTo(a.amount));
+
+    // Combine categories beyond top 5 into "Lainnya"
+    if (data.length > 5) {
+      final top5 = data.take(5).toList();
+      final others = data.skip(5).toList();
+      final othersTotal = others.fold(0.0, (sum, item) => sum + item.amount);
+
+      if (othersTotal > 0) {
+        top5.add(
+          _CategoryData(
+            categoryId: -1,
+            name: 'Lainnya',
+            amount: othersTotal,
+            color: Colors.redAccent,
+            icon: 'more_horiz',
+          ),
+        );
+      }
+      return top5;
+    }
+
+    return data;
+  }
 
   @override
   Widget build(BuildContext context) {
+    final data = _processData();
+
+    if (data.isEmpty) {
+      return const Center(child: Text('Belum ada data kategori.'));
+    }
+
+    final totalAmount = data.fold(0.0, (sum, item) => sum + item.amount);
     final currencyFormatter = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
       decimalDigits: 0,
     );
-    final percentage = (data.amount / totalAmount * 100).toStringAsFixed(1);
 
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Icon(IconHelper.getIcon(data.icon), color: data.color, size: 32),
-        const SizedBox(height: 8),
-        Text(
-          data.name,
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          '$percentage% dari total',
-          style: TextStyle(color: Colors.grey[600], fontSize: 12),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          currencyFormatter.format(data.amount),
-          style: TextStyle(
-            color: data.color,
-            fontWeight: FontWeight.bold,
-            fontSize: 14,
+    return ListView.builder(
+      itemCount: data.length,
+      itemBuilder: (context, index) {
+        final item = data[index];
+        final percentage = (item.amount / totalAmount * 100).toStringAsFixed(1);
+        final isSelected = index == touchedIndex;
+
+        return InkWell(
+          onTap: () => onItemTap(index),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+            margin: const EdgeInsets.only(bottom: 4),
+            decoration: BoxDecoration(
+              color: isSelected ? item.color.withAlpha(30) : null,
+              borderRadius: BorderRadius.circular(12),
+              border: isSelected
+                  ? Border.all(color: item.color.withAlpha(100), width: 2)
+                  : Border.all(
+                      color: Theme.of(context).dividerColor.withAlpha(50),
+                      width: 1,
+                    ),
+              boxShadow: isSelected
+                  ? [
+                      BoxShadow(
+                        color: item.color.withAlpha(50),
+                        offset: const Offset(0, 2),
+                        blurRadius: 4,
+                      ),
+                    ]
+                  : null,
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 12,
+                  height: 12,
+                  decoration: BoxDecoration(
+                    color: item.color,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Icon(
+                  IconHelper.getIcon(item.icon),
+                  size: 20,
+                  color: item.color,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        item.name,
+                        style: TextStyle(
+                          fontWeight: isSelected
+                              ? FontWeight.bold
+                              : FontWeight.w500,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        '$percentage% dari total',
+                        style: TextStyle(
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.color?.withAlpha(180),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Text(
+                  currencyFormatter.format(item.amount),
+                  style: TextStyle(
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                    fontSize: 13,
+                    color: item.color,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
 
 class _CategoryData {
+  final int categoryId;
   final String name;
   final double amount;
   final Color color;
   final String icon;
 
   _CategoryData({
+    required this.categoryId,
     required this.name,
     required this.amount,
     required this.color,
