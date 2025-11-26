@@ -15,15 +15,42 @@ class ScanStrukScreen extends StatefulWidget {
   State<ScanStrukScreen> createState() => _ScanStrukScreenState();
 }
 
-class _ScanStrukScreenState extends State<ScanStrukScreen> {
+class _ScanStrukScreenState extends State<ScanStrukScreen>
+    with WidgetsBindingObserver {
   late CameraNotifier _cameraNotifier;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _cameraNotifier = CameraNotifier();
     _cameraNotifier.addListener(_onCameraStateChanged);
     _initializeCamera();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+
+    // Handle app lifecycle to prevent camera crashes
+    if (_cameraNotifier.isDisposed) return;
+
+    switch (state) {
+      case AppLifecycleState.inactive:
+      case AppLifecycleState.paused:
+      case AppLifecycleState.detached:
+        // Pause camera when app goes to background
+        _cameraNotifier.pauseCamera();
+        break;
+      case AppLifecycleState.resumed:
+        // Resume camera when app comes back to foreground
+        if (mounted && _cameraNotifier.state.isInitialized) {
+          _cameraNotifier.resumeCamera();
+        }
+        break;
+      case AppLifecycleState.hidden:
+        break;
+    }
   }
 
   void _onCameraStateChanged() {
@@ -33,7 +60,13 @@ class _ScanStrukScreenState extends State<ScanStrukScreen> {
   }
 
   Future<void> _initializeCamera() async {
-    await _cameraNotifier.initializeCamera();
+    if (!mounted) return;
+    try {
+      await _cameraNotifier.initializeCamera();
+    } catch (e) {
+      // Error already handled in CameraNotifier
+      debugPrint('Camera initialization error: $e');
+    }
   }
 
   Future<void> _handleCapture() async {
@@ -51,6 +84,8 @@ class _ScanStrukScreenState extends State<ScanStrukScreen> {
   }
 
   void _navigateToPreview(String imagePath) {
+    if (!mounted) return;
+
     _cameraNotifier.pauseCamera(); // Pause camera before navigating
     Navigator.push(
       context,
@@ -58,8 +93,10 @@ class _ScanStrukScreenState extends State<ScanStrukScreen> {
         builder: (context) => PreviewScreen(imagePath: imagePath),
       ),
     ).then((_) {
-      // Resume camera when coming back
-      _cameraNotifier.resumeCamera();
+      // Resume camera when coming back (only if still mounted)
+      if (mounted && !_cameraNotifier.isDisposed) {
+        _cameraNotifier.resumeCamera();
+      }
     });
   }
 
@@ -74,6 +111,7 @@ class _ScanStrukScreenState extends State<ScanStrukScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _cameraNotifier.removeListener(_onCameraStateChanged);
     _cameraNotifier.dispose();
     super.dispose();
