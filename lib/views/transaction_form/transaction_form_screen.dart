@@ -27,6 +27,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   late TextEditingController _amountController;
   late TextEditingController _descriptionController;
   DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
   Category? _selectedCategory;
   Wallet? _selectedWallet;
   t.TransactionType _transactionType = t.TransactionType.expense;
@@ -46,6 +47,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     if (widget.transaction != null) {
       final trx = widget.transaction!;
       _selectedDate = trx.transactionDate;
+      _selectedTime = TimeOfDay.fromDateTime(trx.transactionDate);
       _transactionType = trx.type;
     }
   }
@@ -79,12 +81,21 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
 
     try {
       if (widget.transaction == null) {
+        // Combine selected date with selected time
+        final transactionDateTime = DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          _selectedTime.hour,
+          _selectedTime.minute,
+        );
+
         final newTransaction = t.Transaction(
           id: const Uuid().v4(),
           userId: '',
           categoryId: _selectedCategory!.id,
           amount: amount,
-          transactionDate: _selectedDate,
+          transactionDate: transactionDateTime,
           type: _transactionType,
           description: description.isNotEmpty ? description : null,
           sourceType: t.SourceType.app,
@@ -92,12 +103,21 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
         );
         await repo.addTransaction(newTransaction);
       } else {
+        // Use selected date and time for update
+        final transactionDateTime = DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          _selectedTime.hour,
+          _selectedTime.minute,
+        );
+
         final updatedTransaction = t.Transaction(
           id: widget.transaction!.id,
           userId: widget.transaction!.userId,
           categoryId: _selectedCategory!.id,
           amount: amount,
-          transactionDate: _selectedDate,
+          transactionDate: transactionDateTime,
           type: _transactionType,
           description: description.isNotEmpty ? description : null,
           sourceType: widget.transaction!.sourceType,
@@ -277,9 +297,12 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     const SizedBox(height: 24),
                     _DetailsCard(
                       selectedDate: _selectedDate,
+                      selectedTime: _selectedTime,
                       descriptionController: _descriptionController,
                       onDateChanged: (date) =>
                           setState(() => _selectedDate = date),
+                      onTimeChanged: (time) =>
+                          setState(() => _selectedTime = time),
                     ),
                   ],
                 ),
@@ -491,13 +514,17 @@ class _CategoryGrid extends ConsumerWidget {
 
 class _DetailsCard extends StatelessWidget {
   final DateTime selectedDate;
+  final TimeOfDay selectedTime;
   final TextEditingController descriptionController;
   final ValueChanged<DateTime> onDateChanged;
+  final ValueChanged<TimeOfDay> onTimeChanged;
 
   const _DetailsCard({
     required this.selectedDate,
+    required this.selectedTime,
     required this.descriptionController,
     required this.onDateChanged,
+    required this.onTimeChanged,
   });
 
   String _formatDate(DateTime date) {
@@ -520,6 +547,22 @@ class _DetailsCard extends StatelessWidget {
     }
   }
 
+  Future<void> _selectTime(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: selectedTime,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != selectedTime) {
+      onTimeChanged(picked);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -537,6 +580,18 @@ class _DetailsCard extends StatelessWidget {
               avatar: const Icon(Icons.keyboard_arrow_down),
               label: Text(_formatDate(selectedDate)),
               onPressed: () => _selectDate(context),
+            ),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            leading: const Icon(Icons.access_time),
+            title: const Text('Waktu', style: TextStyle(fontSize: 15)),
+            trailing: ActionChip(
+              avatar: const Icon(Icons.keyboard_arrow_down),
+              label: Text(
+                '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
+              ),
+              onPressed: () => _selectTime(context),
             ),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),

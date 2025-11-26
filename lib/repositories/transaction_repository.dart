@@ -67,8 +67,9 @@ class TransactionRepository {
         .select()
         .eq('id', transaction.walletId)
         .single();
-    
-    final currentBalance = (walletResponse['initial_balance'] as num).toDouble();
+
+    final currentBalance = (walletResponse['initial_balance'] as num)
+        .toDouble();
     double newBalance = currentBalance;
 
     if (transaction.type == TransactionType.income) {
@@ -100,7 +101,9 @@ class TransactionRepository {
     final Map<String, double> walletChanges = {};
 
     for (var trx in transactions) {
-      final amount = trx.type == TransactionType.income ? trx.amount : -trx.amount;
+      final amount = trx.type == TransactionType.income
+          ? trx.amount
+          : -trx.amount;
       walletChanges[trx.walletId] = (walletChanges[trx.walletId] ?? 0) + amount;
     }
 
@@ -114,8 +117,9 @@ class TransactionRepository {
           .select()
           .eq('id', walletId)
           .single();
-      
-      final currentBalance = (walletResponse['initial_balance'] as num).toDouble();
+
+      final currentBalance = (walletResponse['initial_balance'] as num)
+          .toDouble();
       await _client
           .from('wallets')
           .update({'initial_balance': currentBalance + change})
@@ -145,7 +149,7 @@ class TransactionRepository {
     if (oldTrx.walletId == transaction.walletId) {
       // Same Wallet: Adjust difference
       double balanceChange = 0;
-      
+
       // Revert old
       if (oldTrx.type == TransactionType.income) {
         balanceChange -= oldTrx.amount;
@@ -166,8 +170,9 @@ class TransactionRepository {
             .select()
             .eq('id', transaction.walletId)
             .single();
-        final currentBalance = (walletResponse['initial_balance'] as num).toDouble();
-        
+        final currentBalance = (walletResponse['initial_balance'] as num)
+            .toDouble();
+
         await _client
             .from('wallets')
             .update({'initial_balance': currentBalance + balanceChange})
@@ -175,22 +180,23 @@ class TransactionRepository {
       }
     } else {
       // Wallet Changed: Revert from old, Apply to new
-      
+
       // Revert from Old Wallet
       final oldWalletResponse = await _client
           .from('wallets')
           .select()
           .eq('id', oldTrx.walletId)
           .single();
-      final oldWalletBalance = (oldWalletResponse['initial_balance'] as num).toDouble();
-      
+      final oldWalletBalance = (oldWalletResponse['initial_balance'] as num)
+          .toDouble();
+
       double oldRevertChange = 0;
       if (oldTrx.type == TransactionType.income) {
         oldRevertChange -= oldTrx.amount;
       } else {
         oldRevertChange += oldTrx.amount;
       }
-      
+
       await _client
           .from('wallets')
           .update({'initial_balance': oldWalletBalance + oldRevertChange})
@@ -202,7 +208,8 @@ class TransactionRepository {
           .select()
           .eq('id', transaction.walletId)
           .single();
-      final newWalletBalance = (newWalletResponse['initial_balance'] as num).toDouble();
+      final newWalletBalance = (newWalletResponse['initial_balance'] as num)
+          .toDouble();
 
       double newApplyChange = 0;
       if (transaction.type == TransactionType.income) {
@@ -239,7 +246,8 @@ class TransactionRepository {
         .select()
         .eq('id', trx.walletId)
         .single();
-    final currentBalance = (walletResponse['initial_balance'] as num).toDouble();
+    final currentBalance = (walletResponse['initial_balance'] as num)
+        .toDouble();
 
     double balanceChange = 0;
     // Revert logic (Reverse of add)

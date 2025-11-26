@@ -39,6 +39,8 @@ extension StringExtension on String {
         return SourceType.receiptScan;
       case 'chat_prompt':
         return SourceType.chatPrompt;
+      case 'voice_input':
+        return SourceType.voiceInput;
       case 'initial':
         return SourceType.initial;
       default:
@@ -73,11 +75,19 @@ class Transaction {
   });
 
   Map<String, dynamic> toJson() {
+    // Format timestamp to match bot format (milliseconds precision)
+    // Example: 2025-11-26T07:54:09.684Z
+    final utcDate = transactionDate.toUtc();
+    final formattedDate = utcDate.toIso8601String().replaceAllMapped(
+      RegExp(r'\.(\d{3})\d*Z$'),
+      (match) => '.${match.group(1)}Z',
+    );
+
     return {
       'user_id': userId,
       'category_id': categoryId,
       'amount': amount,
-      'transaction_date': transactionDate.toIso8601String(),
+      'transaction_date': formattedDate,
       'type': type.name,
       'description': description,
       'source_type': sourceType.toSnakeCase,

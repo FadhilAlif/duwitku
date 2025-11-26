@@ -9,6 +9,7 @@ import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
 class ReceiptReviewScreen extends ConsumerStatefulWidget {
@@ -27,6 +28,8 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
   bool _isSaving = false;
   final _formKey = GlobalKey<FormState>();
   String? _selectedWalletId;
+  DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
 
   @override
   void initState() {
@@ -86,7 +89,16 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
 
     try {
       final userId = 'placeholder'; // Will be set by repository
-      
+
+      // Combine selected date with selected time
+      final transactionDateTime = DateTime(
+        _selectedDate.year,
+        _selectedDate.month,
+        _selectedDate.day,
+        _selectedTime.hour,
+        _selectedTime.minute,
+      );
+
       final transactions = _items.map((item) {
         if (item.categoryId == null) {
           throw Exception('Semua item harus memiliki kategori');
@@ -96,7 +108,7 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
           userId: userId,
           categoryId: item.categoryId!,
           amount: item.amount,
-          transactionDate: DateTime.now(),
+          transactionDate: transactionDateTime,
           type: item.type,
           description: item.description,
           sourceType: SourceType.receiptScan,
@@ -218,7 +230,11 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
                                         CrossAxisAlignment.start,
                                     children: [
                                       Text(
-                                        'Rp ${_totalAmount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')}',
+                                        NumberFormat.currency(
+                                          locale: 'id_ID',
+                                          symbol: 'Rp ',
+                                          decimalDigits: 0,
+                                        ).format(_totalAmount),
                                         style: theme.textTheme.headlineMedium
                                             ?.copyWith(
                                               color: theme.colorScheme.primary,
@@ -275,7 +291,59 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
                           ],
                         ),
                       ),
-                      
+
+                      // Date and Time Selection Card
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Card(
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                            side: BorderSide(
+                              color: theme.colorScheme.outline.withValues(
+                                alpha: 0.2,
+                              ),
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.calendar_today),
+                                title: const Text(
+                                  'Tanggal',
+                                  style: TextStyle(fontSize: 15),
+                                ),
+                                trailing: ActionChip(
+                                  avatar: const Icon(Icons.keyboard_arrow_down),
+                                  label: Text(_formatDate(_selectedDate)),
+                                  onPressed: () => _selectDate(context),
+                                ),
+                              ),
+                              const Divider(
+                                height: 1,
+                                indent: 16,
+                                endIndent: 16,
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.access_time),
+                                title: const Text(
+                                  'Waktu',
+                                  style: TextStyle(fontSize: 15),
+                                ),
+                                trailing: ActionChip(
+                                  avatar: const Icon(Icons.keyboard_arrow_down),
+                                  label: Text(
+                                    '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
+                                  ),
+                                  onPressed: () => _selectTime(context),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+
                       // Wallet Selection
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
@@ -284,7 +352,9 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
                             initialValue: _selectedWalletId,
                             decoration: InputDecoration(
                               labelText: 'Bayar Menggunakan',
-                              prefixIcon: const Icon(Icons.account_balance_wallet),
+                              prefixIcon: const Icon(
+                                Icons.account_balance_wallet,
+                              ),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -307,7 +377,8 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
                                 _selectedWalletId = value;
                               });
                             },
-                            validator: (value) => value == null ? 'Pilih dompet' : null,
+                            validator: (value) =>
+                                value == null ? 'Pilih dompet' : null,
                           ),
                           loading: () => const LinearProgressIndicator(),
                           error: (_, __) => const Text('Gagal memuat dompet'),
@@ -398,7 +469,7 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
             label: Text(
               _isSaving
                   ? 'Menyimpan...'
-                  : 'Simpan ${_items.length} Transaksi (Rp ${_totalAmount.toStringAsFixed(0).replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]}.')})',
+                  : 'Simpan ${_items.length} Transaksi (${NumberFormat.currency(locale: 'id_ID', symbol: 'Rp ', decimalDigits: 0).format(_totalAmount)})',
             ),
             style: FilledButton.styleFrom(
               padding: const EdgeInsets.all(16),
@@ -410,6 +481,42 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
         ),
       ),
     );
+  }
+
+  String _formatDate(DateTime date) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    if (date == today) return 'Hari Ini';
+    if (date == today.subtract(const Duration(days: 1))) return 'Kemarin';
+    return DateFormat.yMMMMd('id_ID').format(date);
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime(2000),
+      lastDate: DateTime(2101),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() => _selectedDate = picked);
+    }
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: _selectedTime,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != _selectedTime) {
+      setState(() => _selectedTime = picked);
+    }
   }
 
   Widget _buildEmptyState() {
@@ -584,10 +691,13 @@ class _ReceiptItemCardState extends State<_ReceiptItemCard> {
             ),
             const SizedBox(height: 16),
             TextFormField(
-              initialValue: widget.item.amount.toStringAsFixed(0),
+              initialValue: NumberFormat(
+                '#,###',
+                'id_ID',
+              ).format(widget.item.amount).replaceAll(',', '.'),
               decoration: InputDecoration(
                 labelText: 'Nominal',
-                prefixText: 'Rp.',
+                prefixText: 'Rp ',
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -598,14 +708,22 @@ class _ReceiptItemCardState extends State<_ReceiptItemCard> {
               ),
               keyboardType: TextInputType.number,
               onChanged: (val) {
-                widget.item.amount = double.tryParse(val) ?? 0;
+                final cleanValue = val.replaceAll('.', '');
+                widget.item.amount = double.tryParse(cleanValue) ?? 0;
                 widget.onUpdate(widget.item);
               },
-              onSaved: (val) =>
-                  widget.item.amount = double.tryParse(val ?? '0') ?? 0,
+              onSaved: (val) {
+                final cleanValue = val?.replaceAll('.', '') ?? '0';
+                widget.item.amount = double.tryParse(cleanValue) ?? 0;
+              },
               validator: (val) {
-                if (val == null || val.isEmpty) return 'Wajib diisi';
-                if (double.tryParse(val) == null) return 'Harus angka';
+                if (val == null || val.isEmpty || val == '0') {
+                  return 'Jumlah tidak boleh nol';
+                }
+                final cleanValue = val.replaceAll('.', '');
+                if (double.tryParse(cleanValue) == null) {
+                  return 'Harus angka';
+                }
                 return null;
               },
             ),
