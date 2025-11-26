@@ -23,12 +23,12 @@ class _PreviewScreenState extends ConsumerState<PreviewScreen> {
   Future<void> _processReceipt() async {
     setState(() {
       _isLoading = true;
-      _loadingStatus = 'Mengunggah gambar...';
+      _loadingStatus = 'Menganalisis struk...';
     });
 
     try {
       final file = File(widget.imagePath);
-      
+
       // Fetch wallets to pass to service for AI context
       final wallets = await ref.read(walletsStreamProvider.future);
 
