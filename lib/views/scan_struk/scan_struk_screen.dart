@@ -141,23 +141,9 @@ class _ScanStrukScreenState extends State<ScanStrukScreen>
               onRetry: _initializeCamera,
             )
           else if (state.isInitialized && cameraController != null)
-            // Fix for Aspect Ratio to prevent "Gepeng" on tall screens like POCO X7 Pro
-            LayoutBuilder(
-              builder: (context, constraints) {
-                final scale =
-                    1 /
-                    (cameraController.value.aspectRatio *
-                        constraints.maxHeight /
-                        constraints.maxWidth);
-                return Transform.scale(
-                  scale: scale < 1 ? 1 / scale : scale,
-                  child: Center(
-                    child: CameraPreviewWidget(
-                      cameraController: cameraController,
-                    ),
-                  ),
-                );
-              },
+            // Proper camera preview with correct aspect ratio
+            Center(
+              child: CameraPreviewWidget(cameraController: cameraController),
             )
           else
             const Center(child: CircularProgressIndicator(color: Colors.white)),

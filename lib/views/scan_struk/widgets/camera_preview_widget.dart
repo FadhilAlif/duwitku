@@ -12,9 +12,7 @@ class CameraPreviewWidget extends StatelessWidget {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(20),
-      child: CameraPreview(cameraController),
-    );
+    // Simple preview without zoom - let CameraPreview handle aspect ratio naturally
+    return CameraPreview(cameraController);
   }
 }
