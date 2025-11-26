@@ -19,7 +19,7 @@ final bottomNavIndexProvider = NotifierProvider<BottomNavIndexNotifier, int>(
 // Visibility toggle for balance/income/expense on Home Screen
 class BalanceVisibilityNotifier extends Notifier<bool> {
   @override
-  bool build() => true;
+  bool build() => false; // Default hidden
 
   void toggle() {
     state = !state;

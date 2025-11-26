@@ -12,6 +12,7 @@ import 'package:duwitku/views/transaction_form/transaction_form_screen.dart';
 import 'package:duwitku/views/voice_input/voice_input_screen.dart';
 import 'package:duwitku/views/wallet/add_edit_wallet_screen.dart';
 import 'package:duwitku/views/wallet/wallet_detail_screen.dart';
+import 'package:duwitku/views/analytics/analytics_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:duwitku/models/transaction.dart' as t;
@@ -76,6 +77,10 @@ final router = GoRouter(
         final wallet = state.extra as Wallet;
         return WalletDetailScreen(wallet: wallet);
       },
+    ),
+    GoRoute(
+      path: '/analytics',
+      builder: (context, state) => const AnalyticsScreen(),
     ),
   ],
   redirect: (context, state) {
