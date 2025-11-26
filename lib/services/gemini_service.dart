@@ -23,7 +23,7 @@ class GeminiService {
             .join(', ');
 
     final walletsString = wallets
-        .map((w) => "${w.name} (Type: ${w.type.displayName})")
+        .map((w) => "${w.id}:${w.name}")
         .join(', ');
 
     final prompt = '''
@@ -33,7 +33,7 @@ class GeminiService {
       Available Categories (ID:Name):
       $categoriesString
 
-      Available Wallets (Payment Methods):
+      Available Wallets (ID:Name):
       $walletsString
       
       Return a JSON array where each object has:
@@ -41,12 +41,14 @@ class GeminiService {
       - "amount": number (price/cost)
       - "type": string ("expense" or "income")
       - "category_id": integer (Select the most appropriate ID from the available categories based on the item description. If unsure, pick the most generic one.)
+      - "wallet_id": string (Select the most appropriate ID from the available wallets based on the payment method mentioned. If not mentioned, leave null.)
       
       Rules:
       - Infer the type (expense/income) from the context (e.g. "beli" = expense, "dapat" = income).
       - If multiple items are mentioned, list them all.
       - If the amount is mentioned in natural language (e.g., "dua puluh ribu"), convert it to a number (20000).
       - If no currency is specified, assume IDR (Rupiah).
+      - Try to match the wallet from the transcript (e.g., "pakai mandiri" -> find Mandiri wallet ID).
     ''';
 
     try {
@@ -74,6 +76,7 @@ class GeminiService {
                     "enum": ["expense", "income"],
                   },
                   "category_id": {"type": "INTEGER"},
+                  "wallet_id": {"type": "STRING"},
                 },
                 "required": ["description", "amount", "type", "category_id"],
               },

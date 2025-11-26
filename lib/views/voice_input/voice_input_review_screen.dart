@@ -44,10 +44,19 @@ class _VoiceInputReviewScreenState extends ConsumerState<VoiceInputReviewScreen>
     if (wallets.isNotEmpty) {
       if (mounted) {
         setState(() {
-          if (profile.defaultWalletId != null &&
+          // Try to use wallet ID from the first item if available (AI detected)
+          if (_items.isNotEmpty &&
+              _items.first.walletId != null &&
+              wallets.any((w) => w.id == _items.first.walletId)) {
+            _selectedWalletId = _items.first.walletId;
+          }
+          // Fallback to default wallet from profile
+          else if (profile.defaultWalletId != null &&
               wallets.any((w) => w.id == profile.defaultWalletId)) {
             _selectedWalletId = profile.defaultWalletId;
-          } else {
+          }
+          // Last resort: first available wallet
+          else {
             _selectedWalletId = wallets.first.id;
           }
         });
