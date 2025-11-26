@@ -25,15 +25,6 @@ class WalletScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Dompet Saya',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
       body: RefreshIndicator(
         onRefresh: () async {
           ref.invalidate(walletsStreamProvider);

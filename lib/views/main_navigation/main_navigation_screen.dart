@@ -1,9 +1,8 @@
-import 'package:duwitku/views/budget/budget_screen.dart';
+import 'package:duwitku/views/finance_hub/finance_hub_screen.dart';
 import 'package:duwitku/views/home/home_screen.dart';
 import 'package:duwitku/views/profile/profile_screen.dart';
 import 'package:duwitku/views/transaction/transaction_screen.dart';
 import 'package:duwitku/providers/ui_provider.dart';
-import 'package:duwitku/views/wallet/wallet_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,11 +18,10 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
 
 class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   static final List<Widget> _widgetOptions = <Widget>[
-    HomeScreen(),
-    TransactionScreen(),
-    BudgetScreen(),
-    WalletScreen(),
-    ProfileScreen(),
+    const HomeScreen(),
+    const TransactionScreen(),
+    const FinanceHubScreen(),
+    const ProfileScreen(),
   ];
 
   void _showAddTransactionModal(BuildContext context) {
@@ -121,8 +119,7 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               tabs: const [
                 GButton(icon: Icons.home, text: 'Beranda'),
                 GButton(icon: Icons.receipt_long, text: 'Transaksi'),
-                GButton(icon: Icons.donut_large, text: 'Anggaran'),
-                GButton(icon: Icons.account_balance_wallet, text: 'Dompet'),
+                GButton(icon: Icons.bar_chart_sharp, text: 'Keuangan'),
                 GButton(icon: Icons.person, text: 'Profil'),
               ],
               selectedIndex: selectedIndex,

@@ -101,11 +101,6 @@ class HomeScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         actions: [
           IconButton(
-            icon: const Icon(Icons.analytics_outlined),
-            onPressed: () => context.push('/analytics'),
-            tooltip: 'Analisis',
-          ),
-          IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () {
               showDialog(
