@@ -1,4 +1,6 @@
+import 'package:duwitku/models/transaction.dart';
 import 'package:duwitku/models/wallet.dart';
+import 'package:duwitku/providers/transaction_provider.dart';
 import 'package:duwitku/providers/ui_provider.dart';
 import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:flutter/material.dart';
@@ -306,12 +308,19 @@ class _WalletItem extends ConsumerWidget {
                       ],
                     ),
                   ),
-                  Text(
-                    currencyFormat.format(wallet.initialBalance),
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: colorScheme.primary,
-                    ),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        currencyFormat.format(wallet.initialBalance),
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.primary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      _MonthlyChangeIndicator(walletId: wallet.id),
+                    ],
                   ),
                 ],
               ),
@@ -458,6 +467,73 @@ class _EmptyWalletState extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// Monthly Change Indicator Widget
+class _MonthlyChangeIndicator extends ConsumerWidget {
+  final String walletId;
+
+  const _MonthlyChangeIndicator({required this.walletId});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
+
+    return transactionsAsync.when(
+      data: (transactions) {
+        final walletTransactions = transactions
+            .where((t) => t.walletId == walletId)
+            .toList();
+
+        if (walletTransactions.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        final income = walletTransactions
+            .where((trx) => trx.type == TransactionType.income)
+            .fold(0.0, (sum, trx) => sum + trx.amount);
+
+        final expense = walletTransactions
+            .where((trx) => trx.type == TransactionType.expense)
+            .fold(0.0, (sum, trx) => sum + trx.amount);
+
+        final netChange = income - expense;
+
+        if (netChange == 0) {
+          return const SizedBox.shrink();
+        }
+
+        final isPositive = netChange > 0;
+        final color = isPositive ? Colors.green : Colors.red;
+
+        return Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              isPositive ? Icons.trending_up : Icons.trending_down,
+              color: color,
+              size: 14,
+            ),
+            const SizedBox(width: 4),
+            Text(
+              NumberFormat.compactCurrency(
+                locale: 'id_ID',
+                symbol: '',
+                decimalDigits: 0,
+              ).format(netChange.abs()),
+              style: TextStyle(
+                color: color,
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (_, __) => const SizedBox.shrink(),
     );
   }
 }

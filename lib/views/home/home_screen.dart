@@ -206,7 +206,7 @@ class HomeScreen extends ConsumerWidget {
             ),
             _TransactionsChart(transactions: transactions),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -515,94 +515,138 @@ class _TransactionsChart extends StatelessWidget {
     final dailySummary = _calculateDailySummary(transactions);
 
     return Container(
-      height: 120,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: _calculateMaxY(dailySummary),
-          barTouchData: BarTouchData(
-            enabled: true,
-            touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (group) => Colors.blueGrey,
-              tooltipPadding: const EdgeInsets.all(8),
-              tooltipMargin: 8,
-              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                final currencyFormatter = NumberFormat.currency(
-                  locale: 'id_ID',
-                  symbol: 'Rp ',
-                  decimalDigits: 0,
-                );
-                return BarTooltipItem(
-                  currencyFormatter.format(rod.toY),
-                  const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Aktivitas 7 Hari Terakhir',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.lightGreenAccent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                );
-              },
-            ),
+                  const SizedBox(width: 4),
+                  const Text('Masuk', style: TextStyle(fontSize: 11)),
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text('Keluar', style: TextStyle(fontSize: 11)),
+                ],
+              ),
+            ],
           ),
-          titlesData: FlTitlesData(
-            show: true,
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (double value, TitleMeta meta) {
-                  if (value.toInt() < 0 ||
-                      value.toInt() >= dailySummary.length) {
-                    return const SizedBox.shrink();
-                  }
-                  final day = dailySummary[value.toInt()].day;
-                  return Text(
-                    DateFormat('E', 'id_ID').format(day).substring(0, 1),
-                    style: const TextStyle(fontSize: 12),
+          SizedBox(
+            height: 140,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: _calculateMaxY(dailySummary),
+                barTouchData: BarTouchData(
+                  enabled: true,
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipColor: (group) => Colors.blueGrey,
+                    tooltipPadding: const EdgeInsets.all(8),
+                    tooltipMargin: 8,
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final currencyFormatter = NumberFormat.currency(
+                        locale: 'id_ID',
+                        symbol: 'Rp ',
+                        decimalDigits: 0,
+                      );
+                      return BarTooltipItem(
+                        currencyFormatter.format(rod.toY),
+                        const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (double value, TitleMeta meta) {
+                        if (value.toInt() < 0 ||
+                            value.toInt() >= dailySummary.length) {
+                          return const SizedBox.shrink();
+                        }
+                        final day = dailySummary[value.toInt()].day;
+                        return Text(
+                          DateFormat('E', 'id_ID').format(day).substring(0, 1),
+                          style: const TextStyle(fontSize: 12),
+                        );
+                      },
+                      reservedSize: 24,
+                    ),
+                  ),
+                  leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                gridData: const FlGridData(show: false),
+                barGroups: dailySummary.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final summary = entry.value;
+                  return BarChartGroupData(
+                    x: index,
+                    barRods: [
+                      BarChartRodData(
+                        toY: summary.expense,
+                        color: Colors.redAccent,
+                        width: 8,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(4),
+                          topRight: Radius.circular(4),
+                        ),
+                      ),
+                      BarChartRodData(
+                        toY: summary.income,
+                        color: Colors.lightGreenAccent,
+                        width: 8,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(4),
+                          topRight: Radius.circular(4),
+                        ),
+                      ),
+                    ],
                   );
-                },
-                reservedSize: 24,
+                }).toList(),
               ),
             ),
-            leftTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
           ),
-          borderData: FlBorderData(show: false),
-          gridData: const FlGridData(show: false),
-          barGroups: dailySummary.asMap().entries.map((entry) {
-            final index = entry.key;
-            final summary = entry.value;
-            return BarChartGroupData(
-              x: index,
-              barRods: [
-                BarChartRodData(
-                  toY: summary.expense,
-                  color: Colors.redAccent,
-                  width: 8,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(4),
-                    topRight: Radius.circular(4),
-                  ),
-                ),
-                BarChartRodData(
-                  toY: summary.income,
-                  color: Colors.lightGreenAccent,
-                  width: 8,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(4),
-                    topRight: Radius.circular(4),
-                  ),
-                ),
-              ],
-            );
-          }).toList(),
-        ),
+        ],
       ),
     );
   }
@@ -688,7 +732,7 @@ class _TransactionList extends StatelessWidget {
     );
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       itemCount: groupedTransactions.keys.length,
       itemBuilder: (context, index) {
         final dateString = groupedTransactions.keys.elementAt(index);
@@ -728,7 +772,7 @@ class _TransactionGroup extends StatelessWidget {
     );
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
+      margin: const EdgeInsets.only(bottom: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [

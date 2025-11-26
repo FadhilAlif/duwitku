@@ -35,25 +35,84 @@ class _MonthSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedMonth = ref.watch(budgetMonthProvider);
     final notifier = ref.read(budgetMonthProvider.notifier);
+
+    // Calculate days remaining in selected month
+    final now = DateTime.now();
+    final lastDayOfMonth = DateTime(
+      selectedMonth.year,
+      selectedMonth.month + 1,
+      0,
+    );
+    final daysRemaining = lastDayOfMonth.difference(now).inDays;
+    final isCurrentMonth =
+        selectedMonth.year == now.year && selectedMonth.month == now.month;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left),
-            onPressed: notifier.previousMonth,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: notifier.previousMonth,
+              ),
+              Text(
+                DateFormat.yMMMM('id_ID').format(selectedMonth),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: notifier.nextMonth,
+              ),
+            ],
           ),
-          Text(
-            DateFormat.yMMMM('id_ID').format(selectedMonth),
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          IconButton(
-            icon: const Icon(Icons.chevron_right),
-            onPressed: notifier.nextMonth,
-          ),
+          if (isCurrentMonth && daysRemaining >= 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: daysRemaining <= 5
+                    ? Colors.red.shade50
+                    : Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: daysRemaining <= 5
+                      ? Colors.red.shade200
+                      : Colors.blue.shade200,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    daysRemaining <= 5
+                        ? Icons.warning_amber_rounded
+                        : Icons.info_outline,
+                    size: 16,
+                    color: daysRemaining <= 5
+                        ? Colors.red.shade700
+                        : Colors.blue.shade700,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    daysRemaining == 0
+                        ? 'Hari terakhir bulan ini!'
+                        : 'Sisa $daysRemaining hari lagi di bulan ini',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: daysRemaining <= 5
+                          ? Colors.red.shade700
+                          : Colors.blue.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );

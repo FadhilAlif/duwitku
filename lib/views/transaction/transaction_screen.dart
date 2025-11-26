@@ -34,7 +34,8 @@ class TransactionScreen extends ConsumerWidget {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
     final walletsAsync = ref.watch(walletsStreamProvider);
 
-    final isLoading = transactionsAsync.isLoading ||
+    final isLoading =
+        transactionsAsync.isLoading ||
         categoriesAsync.isLoading ||
         walletsAsync.isLoading;
 
@@ -271,6 +272,9 @@ class _FilteredTransactionList extends ConsumerWidget {
         Expanded(
           child: GroupedListView<t.Transaction, DateTime>(
             physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(
+              bottom: 80,
+            ), // Add padding to avoid FAB
             elements: filteredTransactions,
             groupBy: (trx) => DateTime(
               trx.transactionDate.year,
