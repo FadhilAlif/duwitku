@@ -3,7 +3,6 @@ import 'package:duwitku/models/category.dart';
 import 'package:duwitku/models/transaction.dart' as t;
 import 'package:duwitku/providers/budget_provider.dart';
 import 'package:duwitku/providers/category_provider.dart';
-import 'package:duwitku/providers/transaction_provider.dart';
 import 'package:duwitku/utils/icon_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
@@ -124,7 +123,7 @@ class _BudgetBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final budgetsAsync = ref.watch(budgetsStreamProvider);
-    final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
+    final transactionsAsync = ref.watch(budgetTransactionsStreamProvider);
     final categoriesAsync = ref.watch(categoriesStreamProvider);
 
     final isLoading =
@@ -161,15 +160,15 @@ class _BudgetBody extends ConsumerWidget {
           ]
         : categoriesAsync.asData?.value ?? [];
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(budgetsStreamProvider);
-        ref.invalidate(filteredTransactionsStreamProvider);
-        ref.invalidate(categoriesStreamProvider);
-        await Future.delayed(const Duration(milliseconds: 500));
-      },
-      child: Skeletonizer(
-        enabled: isLoading,
+    return Skeletonizer(
+      enabled: isLoading,
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(budgetsStreamProvider);
+          ref.invalidate(budgetTransactionsStreamProvider);
+          ref.invalidate(categoriesStreamProvider);
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
         child: budgets.isEmpty && !isLoading
             ? const _EmptyState()
             : _BudgetList(
@@ -725,8 +724,6 @@ class _BudgetFormState extends ConsumerState<_BudgetForm> {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
-    final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     final amount =
         double.tryParse(_amountController.text.replaceAll('.', '')) ?? 0.0;
     final repo = ref.read(budgetRepositoryProvider);
@@ -745,7 +742,8 @@ class _BudgetFormState extends ConsumerState<_BudgetForm> {
         await repo.updateBudget(updatedBudget);
       } else {
         if (_selectedCategory == null) {
-          messenger.showSnackBar(
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Pilih kategori terlebih dahulu.')),
           );
           return;
@@ -760,9 +758,11 @@ class _BudgetFormState extends ConsumerState<_BudgetForm> {
         );
         await repo.createBudget(newBudget);
       }
-      navigator.pop();
+      if (!mounted) return;
+      Navigator.of(context).pop();
     } catch (e) {
-      messenger.showSnackBar(
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal menyimpan budget: ${e.toString()}')),
       );
     }

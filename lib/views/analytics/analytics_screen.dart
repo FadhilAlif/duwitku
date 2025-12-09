@@ -82,28 +82,40 @@ class AnalyticsScreen extends ConsumerWidget {
     final categoriesAsync = ref.watch(categoriesStreamProvider);
 
     return Scaffold(
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const _MonthSelector(),
-              const SizedBox(height: 16),
-              _FilterSegmentedControl(currentFilter: filter),
-              const SizedBox(height: 24),
-              if (transactionsAsync.isLoading || categoriesAsync.isLoading)
-                const Skeletonizer(enabled: true, child: _LoadingPlaceholder())
-              else if (transactionsAsync.hasError)
-                Center(child: Text('Error: ${transactionsAsync.error}'))
-              else
-                _AnalyticsContent(
-                  transactions: transactionsAsync.value ?? [],
-                  categories: categoriesAsync.value ?? [],
-                  filter: filter,
-                  selectedMonth: selectedMonth,
-                ),
-            ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(
+            analyticsTransactionsProvider(
+              DateTimeRange(start: startDate, end: endDate),
+            ),
+          );
+          ref.invalidate(categoriesStreamProvider);
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _MonthSelector(),
+                const SizedBox(height: 16),
+                _FilterSegmentedControl(currentFilter: filter),
+                const SizedBox(height: 24),
+                if (transactionsAsync.isLoading || categoriesAsync.isLoading)
+                  const Skeletonizer(enabled: true, child: _LoadingPlaceholder())
+                else if (transactionsAsync.hasError)
+                  Center(child: Text('Error: ${transactionsAsync.error}'))
+                else
+                  _AnalyticsContent(
+                    transactions: transactionsAsync.value ?? [],
+                    categories: categoriesAsync.value ?? [],
+                    filter: filter,
+                    selectedMonth: selectedMonth,
+                  ),
+              ],
+            ),
           ),
         ),
       ),
