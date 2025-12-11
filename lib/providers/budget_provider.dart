@@ -41,15 +41,23 @@ final budgetsStreamProvider = StreamProvider.autoDispose<List<Budget>>((ref) {
 });
 
 // StreamProvider for transactions based on the selected budget month
-final budgetTransactionsStreamProvider = StreamProvider.autoDispose<List<Transaction>>((ref) {
-  final transactionRepository = TransactionRepository();
-  final selectedMonth = ref.watch(budgetMonthProvider);
-  
-  final startDate = DateTime(selectedMonth.year, selectedMonth.month, 1);
-  final endDate = DateTime(selectedMonth.year, selectedMonth.month + 1, 0, 23, 59, 59);
-  
-  return transactionRepository.getTransactionsStream(
-    startDate: startDate,
-    endDate: endDate,
-  );
-});
+final budgetTransactionsStreamProvider =
+    StreamProvider.autoDispose<List<Transaction>>((ref) {
+      final transactionRepository = TransactionRepository();
+      final selectedMonth = ref.watch(budgetMonthProvider);
+
+      final startDate = DateTime(selectedMonth.year, selectedMonth.month, 1);
+      final endDate = DateTime(
+        selectedMonth.year,
+        selectedMonth.month + 1,
+        0,
+        23,
+        59,
+        59,
+      );
+
+      return transactionRepository.getTransactionsStream(
+        startDate: startDate,
+        endDate: endDate,
+      );
+    });

@@ -177,8 +177,9 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                         prefixIcon: Icon(Icons.account_balance_wallet_outlined),
                         border: OutlineInputBorder(),
                       ),
-                      // Use value instead of initialValue for controlled state if needed, 
-                      // but 'value' is deprecated for initial state. 
+
+                      // Use value instead of initialValue for controlled state if needed,
+                      // but 'value' is deprecated for initial state.
                       // However, for dynamic updates, we often need 'value'.
                       // The warning says: "Use initialValue instead. This will set the initial value for the form field."
                       // If we want to control it, we should look at the migration guide.
@@ -193,14 +194,13 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                       // If I remove 'value' and use 'initialValue', it won't update on setState.
                       // Let's try using `value` property but suppress warning or accept it for now as it's a pre-deprecation.
                       // BUT the user wants to FIX it.
-                      
+
                       // The fix for DropdownButtonFormField when you want to control it:
-                      // Actually, the deprecation message might be misleading or I am misinterpreting. 
+                      // Actually, the deprecation message might be misleading or I am misinterpreting.
                       // "Use initialValue instead. This will set the initial value for the form field."
                       // If I am using it as a controlled field (which I am, via setState), 'value' is the correct property.
                       // If I am using it as an uncontrolled field, 'initialValue' is correct.
                       // Let's try to use 'value' and see if I can simply ignore it or if there is a better way.
-                      
                       initialValue: _selectedDefaultWalletId,
                       items: walletsAsync.asData!.value.map((wallet) {
                         return DropdownMenuItem(

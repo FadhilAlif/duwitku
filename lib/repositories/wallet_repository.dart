@@ -40,11 +40,8 @@ class WalletRepository {
     // Don't update user_id typically
     data.remove('user_id');
     data.remove('created_at');
-    
-    await _client
-        .from('wallets')
-        .update(data)
-        .eq('id', wallet.id);
+
+    await _client.from('wallets').update(data).eq('id', wallet.id);
   }
 
   Future<void> deleteWallet(String id) async {

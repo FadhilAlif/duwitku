@@ -116,27 +116,34 @@ final filteredTransactionsStreamProvider =
 
 final previousMonthTransactionsStreamProvider =
     StreamProvider.autoDispose<List<Transaction>>((ref) {
-  final transactionRepository = ref.watch(transactionRepositoryProvider);
-  final filterState = ref.watch(transactionFilterProvider);
+      final transactionRepository = ref.watch(transactionRepositoryProvider);
+      final filterState = ref.watch(transactionFilterProvider);
 
-  final currentStart = filterState.dateRange.start;
-  // Calculate previous month start and end
-  final prevStart = DateTime(currentStart.year, currentStart.month - 1, 1);
-  final prevEnd = DateTime(currentStart.year, currentStart.month, 0, 23, 59, 59);
+      final currentStart = filterState.dateRange.start;
+      // Calculate previous month start and end
+      final prevStart = DateTime(currentStart.year, currentStart.month - 1, 1);
+      final prevEnd = DateTime(
+        currentStart.year,
+        currentStart.month,
+        0,
+        23,
+        59,
+        59,
+      );
 
-  return transactionRepository.getTransactionsStream(
-    startDate: prevStart,
-    endDate: prevEnd,
-  );
-});
+      return transactionRepository.getTransactionsStream(
+        startDate: prevStart,
+        endDate: prevEnd,
+      );
+    });
 
 final maxTransactionAmountProvider = FutureProvider.autoDispose<double>((ref) {
   final repository = ref.watch(transactionRepositoryProvider);
   return repository.getMaxTransactionAmount();
 });
 
-final walletTransactionsStreamProvider =
-    StreamProvider.family.autoDispose<List<Transaction>, String>((ref, walletId) {
-  final repository = ref.watch(transactionRepositoryProvider);
-  return repository.getTransactionsByWalletStream(walletId);
-});
+final walletTransactionsStreamProvider = StreamProvider.family
+    .autoDispose<List<Transaction>, String>((ref, walletId) {
+      final repository = ref.watch(transactionRepositoryProvider);
+      return repository.getTransactionsByWalletStream(walletId);
+    });

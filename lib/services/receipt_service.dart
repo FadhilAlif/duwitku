@@ -67,7 +67,10 @@ class ReceiptService {
   }
 
   // Analyze receipt using Gemini API
-  Future<List<ReceiptItem>> analyzeReceipt(File imageFile, List<Wallet> wallets) async {
+  Future<List<ReceiptItem>> analyzeReceipt(
+    File imageFile,
+    List<Wallet> wallets,
+  ) async {
     final apiKey = dotenv.env['GEMINI_API_KEY'];
     if (apiKey == null) throw Exception('GEMINI_API_KEY not found');
 

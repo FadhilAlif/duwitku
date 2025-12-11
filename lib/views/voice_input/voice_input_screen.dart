@@ -48,7 +48,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
           setState(() {
             _isListening = false;
             if (error.errorMsg != 'error_speech_timeout') {
-                 _text = 'Error: ${error.errorMsg}';
+              _text = 'Error: ${error.errorMsg}';
             }
           });
         },
@@ -77,12 +77,13 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
         if (!_hasSpeech) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Fitur suara tidak tersedia')));
+              const SnackBar(content: Text('Fitur suara tidak tersedia')),
+            );
           }
           return;
         }
       }
-      
+
       setState(() {
         _isListening = true;
         _text = ''; // Clear previous text
@@ -108,10 +109,10 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
 
   Future<void> _processTransaction() async {
     if (_text.isEmpty || _text.startsWith('Tekan tombol')) {
-       ScaffoldMessenger.of(context).showSnackBar(
-         const SnackBar(content: Text('Mohon bicara terlebih dahulu')),
-       );
-       return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Mohon bicara terlebih dahulu')),
+      );
+      return;
     }
 
     setState(() => _isProcessing = true);
@@ -124,17 +125,16 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
       final categories = await ref.read(categoriesStreamProvider.future);
       final wallets = await ref.read(walletsStreamProvider.future);
 
-      final items = await ref.read(geminiServiceProvider).analyzeTransactionFromText(
+      final items = await ref
+          .read(geminiServiceProvider)
+          .analyzeTransactionFromText(
             text: _text,
             categories: categories,
             wallets: wallets,
           );
 
       if (mounted) {
-        context.pushReplacement(
-          '/voice_input_review',
-          extra: items,
-        );
+        context.pushReplacement('/voice_input_review', extra: items);
       }
     } catch (e) {
       if (mounted) {
@@ -150,16 +150,12 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
     }
   }
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Input Suara'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Input Suara'), centerTitle: true),
       body: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
@@ -179,18 +175,20 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
               ),
             ),
             const SizedBox(height: 32),
-            
+
             // Text Output Area
             Expanded(
               child: Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.5),
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.5,
+                  ),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: _isListening 
-                        ? theme.colorScheme.primary 
+                    color: _isListening
+                        ? theme.colorScheme.primary
                         : Colors.transparent,
                     width: 2,
                   ),
@@ -199,8 +197,8 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
                   child: Text(
                     _text.isEmpty && _isListening ? 'Mendengarkan...' : _text,
                     style: theme.textTheme.bodyLarge?.copyWith(
-                      color: (_text.isEmpty || _text.startsWith('Tekan tombol')) 
-                          ? theme.colorScheme.onSurfaceVariant 
+                      color: (_text.isEmpty || _text.startsWith('Tekan tombol'))
+                          ? theme.colorScheme.onSurfaceVariant
                           : theme.colorScheme.onSurface,
                       fontSize: 18,
                     ),
@@ -209,7 +207,7 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 40),
 
             // Mic Button
@@ -220,14 +218,16 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
                 padding: const EdgeInsets.all(32),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  color: _isListening 
-                      ? theme.colorScheme.error 
+                  color: _isListening
+                      ? theme.colorScheme.error
                       : theme.colorScheme.primary,
                   boxShadow: [
                     BoxShadow(
-                      color: (_isListening 
-                          ? theme.colorScheme.error 
-                          : theme.colorScheme.primary).withValues(alpha: 0.3),
+                      color:
+                          (_isListening
+                                  ? theme.colorScheme.error
+                                  : theme.colorScheme.primary)
+                              .withValues(alpha: 0.3),
                       blurRadius: 30,
                       spreadRadius: 5,
                     ),
@@ -240,22 +240,35 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 40),
 
             // Process Button
             SizedBox(
               width: double.infinity,
               child: FilledButton.icon(
-                onPressed: (_text.isEmpty || _text.startsWith('Tekan tombol') || _isProcessing) 
-                    ? null 
+                onPressed:
+                    (_text.isEmpty ||
+                        _text.startsWith('Tekan tombol') ||
+                        _isProcessing)
+                    ? null
                     : _processTransaction,
-                icon: _isProcessing 
-                    ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
+                icon: _isProcessing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.white,
+                        ),
+                      )
                     : const Icon(Icons.check_circle),
                 label: Text(
                   _isProcessing ? 'Sedang Memproses...' : 'Proses Transaksi',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 16),

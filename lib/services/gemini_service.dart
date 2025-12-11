@@ -16,17 +16,15 @@ class GeminiService {
     final apiKey = dotenv.env['GEMINI_API_KEY'];
     if (apiKey == null) throw Exception('GEMINI_API_KEY not found');
 
-    final categoriesString =
-        categories
-            .where((c) => c.name != 'Duwitku Bot')
-            .map((c) => "${c.id}:${c.name} (${c.type})")
-            .join(', ');
-
-    final walletsString = wallets
-        .map((w) => "${w.id}:${w.name}")
+    final categoriesString = categories
+        .where((c) => c.name != 'Duwitku Bot')
+        .map((c) => "${c.id}:${c.name} (${c.type})")
         .join(', ');
 
-    final prompt = '''
+    final walletsString = wallets.map((w) => "${w.id}:${w.name}").join(', ');
+
+    final prompt =
+        '''
       Analyze this voice transcript of a financial transaction and extract the items.
       Transcript: "$text"
       

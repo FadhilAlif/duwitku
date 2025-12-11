@@ -104,7 +104,10 @@ class AnalyticsScreen extends ConsumerWidget {
                 _FilterSegmentedControl(currentFilter: filter),
                 const SizedBox(height: 24),
                 if (transactionsAsync.isLoading || categoriesAsync.isLoading)
-                  const Skeletonizer(enabled: true, child: _LoadingPlaceholder())
+                  const Skeletonizer(
+                    enabled: true,
+                    child: _LoadingPlaceholder(),
+                  )
                 else if (transactionsAsync.hasError)
                   Center(child: Text('Error: ${transactionsAsync.error}'))
                 else

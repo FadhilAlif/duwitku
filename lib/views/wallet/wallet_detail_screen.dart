@@ -20,7 +20,9 @@ class WalletDetailScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final transactionsAsync = ref.watch(walletTransactionsStreamProvider(wallet.id));
+    final transactionsAsync = ref.watch(
+      walletTransactionsStreamProvider(wallet.id),
+    );
     final categoriesAsync = ref.watch(categoriesStreamProvider);
 
     final isLoading = transactionsAsync.isLoading || categoriesAsync.isLoading;
@@ -56,7 +58,7 @@ class WalletDetailScreen extends ConsumerWidget {
         : categoriesAsync.asData?.value ?? [];
 
     final categoryMap = {for (var c in categories) c.id: c};
-    
+
     final currencyFormatter = NumberFormat.currency(
       locale: 'id_ID',
       symbol: 'Rp ',
@@ -73,7 +75,10 @@ class WalletDetailScreen extends ConsumerWidget {
       ),
       body: Column(
         children: [
-           _WalletSummaryCard(wallet: wallet, currencyFormatter: currencyFormatter),
+          _WalletSummaryCard(
+            wallet: wallet,
+            currencyFormatter: currencyFormatter,
+          ),
           Expanded(
             child: Skeletonizer(
               enabled: isLoading,
@@ -114,15 +119,17 @@ class _WalletSummaryCard extends StatelessWidget {
         children: [
           Row(
             children: [
-               Icon(
-                  _getWalletIcon(wallet.type),
-                  color: Theme.of(context).colorScheme.onPrimaryContainer,
-               ),
-               const SizedBox(width: 12),
-               Text(
+              Icon(
+                _getWalletIcon(wallet.type),
+                color: Theme.of(context).colorScheme.onPrimaryContainer,
+              ),
+              const SizedBox(width: 12),
+              Text(
                 'Saldo Dompet',
                 style: TextStyle(
-                  color: Theme.of(context).colorScheme.onPrimaryContainer.withAlpha(204),
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.onPrimaryContainer.withAlpha(204),
                   fontSize: 16,
                 ),
               ),
@@ -240,7 +247,7 @@ class _TransactionListItem extends ConsumerWidget {
         motion: const DrawerMotion(),
         dismissible: DismissiblePane(
           confirmDismiss: () async {
-             final confirm = await showDialog<bool>(
+            final confirm = await showDialog<bool>(
               context: context,
               builder: (context) => AlertDialog(
                 title: const Text('Hapus Transaksi'),
@@ -262,7 +269,7 @@ class _TransactionListItem extends ConsumerWidget {
             return confirm ?? false;
           },
           onDismissed: () async {
-             try {
+            try {
               await ref
                   .read(transactionRepositoryProvider)
                   .deleteTransaction(transaction.id);
@@ -360,20 +367,20 @@ class _TransactionListItem extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(category?.name ?? 'Tanpa Kategori'),
-               Row(
-                  children: [
-                    Icon(
-                      _getWalletIcon(wallet.type),
-                      size: 12,
-                      color: Colors.grey,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      wallet.name,
-                      style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    ),
-                  ],
-                ),
+              Row(
+                children: [
+                  Icon(
+                    _getWalletIcon(wallet.type),
+                    size: 12,
+                    color: Colors.grey,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    wallet.name,
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ],
+              ),
             ],
           ),
           trailing: Text(

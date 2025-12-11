@@ -22,7 +22,8 @@ class VoiceInputReviewScreen extends ConsumerStatefulWidget {
       _VoiceInputReviewScreenState();
 }
 
-class _VoiceInputReviewScreenState extends ConsumerState<VoiceInputReviewScreen> {
+class _VoiceInputReviewScreenState
+    extends ConsumerState<VoiceInputReviewScreen> {
   late List<ReceiptItem> _items;
   bool _isSaving = false;
   final _formKey = GlobalKey<FormState>();
