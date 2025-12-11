@@ -12,18 +12,18 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:uuid/uuid.dart';
 
-class ReceiptReviewScreen extends ConsumerStatefulWidget {
+class VoiceInputReviewScreen extends ConsumerStatefulWidget {
   final List<ReceiptItem> items;
-  final String? imageUrl;
 
-  const ReceiptReviewScreen({super.key, required this.items, this.imageUrl});
+  const VoiceInputReviewScreen({super.key, required this.items});
 
   @override
-  ConsumerState<ReceiptReviewScreen> createState() =>
-      _ReceiptReviewScreenState();
+  ConsumerState<VoiceInputReviewScreen> createState() =>
+      _VoiceInputReviewScreenState();
 }
 
-class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
+class _VoiceInputReviewScreenState
+    extends ConsumerState<VoiceInputReviewScreen> {
   late List<ReceiptItem> _items;
   bool _isSaving = false;
   final _formKey = GlobalKey<FormState>();
@@ -45,10 +45,19 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
     if (wallets.isNotEmpty) {
       if (mounted) {
         setState(() {
-          if (profile.defaultWalletId != null &&
+          // Try to use wallet ID from the first item if available (AI detected)
+          if (_items.isNotEmpty &&
+              _items.first.walletId != null &&
+              wallets.any((w) => w.id == _items.first.walletId)) {
+            _selectedWalletId = _items.first.walletId;
+          }
+          // Fallback to default wallet from profile
+          else if (profile.defaultWalletId != null &&
               wallets.any((w) => w.id == profile.defaultWalletId)) {
             _selectedWalletId = profile.defaultWalletId;
-          } else {
+          }
+          // Last resort: first available wallet
+          else {
             _selectedWalletId = wallets.first.id;
           }
         });
@@ -111,8 +120,8 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
           transactionDate: transactionDateTime,
           type: item.type,
           description: item.description,
-          sourceType: SourceType.receiptScan,
-          receiptImageUrl: widget.imageUrl,
+          sourceType: SourceType.voiceInput, // Changed to voiceInput
+          receiptImageUrl: null, // No image for voice input
           walletId: _selectedWalletId!,
         );
       }).toList();
@@ -152,7 +161,7 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Review Transaksi'),
+        title: const Text('Review Voice Input'), // Changed title
         elevation: 0,
         actions: [
           if (!_isSaving)
@@ -205,7 +214,7 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
                             Row(
                               children: [
                                 Icon(
-                                  Icons.receipt_long,
+                                  Icons.keyboard_voice, // Changed icon
                                   color: theme.colorScheme.primary,
                                   size: 24,
                                 ),
@@ -270,13 +279,13 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Icon(
-                                        Icons.qr_code_scanner,
+                                        Icons.mic, // Changed icon
                                         size: 16,
                                         color: theme.colorScheme.primary,
                                       ),
                                       const SizedBox(width: 4),
                                       Text(
-                                        'Scan Struk',
+                                        'Voice Input', // Changed text
                                         style: theme.textTheme.bodySmall
                                             ?.copyWith(
                                               color: theme.colorScheme.primary,
@@ -534,14 +543,14 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
                 shape: BoxShape.circle,
               ),
               child: Icon(
-                Icons.receipt_long_outlined,
+                Icons.mic_off_outlined, // Changed icon
                 size: 64,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 24),
             Text(
-              'Struk Tidak Terbaca',
+              'Suara Tidak Terdeteksi',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -549,7 +558,7 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
             ),
             const SizedBox(height: 12),
             Text(
-              'Kami tidak dapat menemukan item pada gambar ini. Silakan coba scan ulang atau masukkan item secara manual.',
+              'Kami tidak dapat mengenali transaksi dari suara Anda. Silakan coba lagi atau masukkan item secara manual.',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -564,8 +573,8 @@ class _ReceiptReviewScreenState extends ConsumerState<ReceiptReviewScreen> {
             const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: () => Navigator.pop(context),
-              icon: const Icon(Icons.camera_alt_outlined),
-              label: const Text('Scan Ulang'),
+              icon: const Icon(Icons.mic),
+              label: const Text('Coba Lagi'),
             ),
           ],
         ),

@@ -3,7 +3,6 @@ import 'package:duwitku/models/category.dart';
 import 'package:duwitku/models/transaction.dart' as t;
 import 'package:duwitku/providers/budget_provider.dart';
 import 'package:duwitku/providers/category_provider.dart';
-import 'package:duwitku/providers/transaction_provider.dart';
 import 'package:duwitku/utils/icon_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
@@ -18,15 +17,6 @@ class BudgetScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'Anggaran',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        centerTitle: true,
-        elevation: 0,
-        backgroundColor: Colors.transparent,
-      ),
       body: Column(
         children: [
           const _MonthSelector(),
@@ -44,25 +34,84 @@ class _MonthSelector extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedMonth = ref.watch(budgetMonthProvider);
     final notifier = ref.read(budgetMonthProvider.notifier);
+
+    // Calculate days remaining in selected month
+    final now = DateTime.now();
+    final lastDayOfMonth = DateTime(
+      selectedMonth.year,
+      selectedMonth.month + 1,
+      0,
+    );
+    final daysRemaining = lastDayOfMonth.difference(now).inDays;
+    final isCurrentMonth =
+        selectedMonth.year == now.year && selectedMonth.month == now.month;
+
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Column(
         children: [
-          IconButton(
-            icon: const Icon(Icons.chevron_left),
-            onPressed: notifier.previousMonth,
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.chevron_left),
+                onPressed: notifier.previousMonth,
+              ),
+              Text(
+                DateFormat.yMMMM('id_ID').format(selectedMonth),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              IconButton(
+                icon: const Icon(Icons.chevron_right),
+                onPressed: notifier.nextMonth,
+              ),
+            ],
           ),
-          Text(
-            DateFormat.yMMMM('id_ID').format(selectedMonth),
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          IconButton(
-            icon: const Icon(Icons.chevron_right),
-            onPressed: notifier.nextMonth,
-          ),
+          if (isCurrentMonth && daysRemaining >= 0)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+              decoration: BoxDecoration(
+                color: daysRemaining <= 5
+                    ? Colors.red.shade50
+                    : Colors.blue.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: daysRemaining <= 5
+                      ? Colors.red.shade200
+                      : Colors.blue.shade200,
+                  width: 1,
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    daysRemaining <= 5
+                        ? Icons.warning_amber_rounded
+                        : Icons.info_outline,
+                    size: 16,
+                    color: daysRemaining <= 5
+                        ? Colors.red.shade700
+                        : Colors.blue.shade700,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    daysRemaining == 0
+                        ? 'Hari terakhir bulan ini!'
+                        : 'Sisa $daysRemaining hari lagi di bulan ini',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: daysRemaining <= 5
+                          ? Colors.red.shade700
+                          : Colors.blue.shade700,
+                    ),
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -74,7 +123,7 @@ class _BudgetBody extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final budgetsAsync = ref.watch(budgetsStreamProvider);
-    final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
+    final transactionsAsync = ref.watch(budgetTransactionsStreamProvider);
     final categoriesAsync = ref.watch(categoriesStreamProvider);
 
     final isLoading =
@@ -111,15 +160,15 @@ class _BudgetBody extends ConsumerWidget {
           ]
         : categoriesAsync.asData?.value ?? [];
 
-    return RefreshIndicator(
-      onRefresh: () async {
-        ref.invalidate(budgetsStreamProvider);
-        ref.invalidate(filteredTransactionsStreamProvider);
-        ref.invalidate(categoriesStreamProvider);
-        await Future.delayed(const Duration(milliseconds: 500));
-      },
-      child: Skeletonizer(
-        enabled: isLoading,
+    return Skeletonizer(
+      enabled: isLoading,
+      child: RefreshIndicator(
+        onRefresh: () async {
+          ref.invalidate(budgetsStreamProvider);
+          ref.invalidate(budgetTransactionsStreamProvider);
+          ref.invalidate(categoriesStreamProvider);
+          await Future.delayed(const Duration(milliseconds: 500));
+        },
         child: budgets.isEmpty && !isLoading
             ? const _EmptyState()
             : _BudgetList(
@@ -516,20 +565,13 @@ class _BudgetCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text(
-                        'Sisa',
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: Colors.grey.shade600,
-                        ),
-                      ),
+                      Text('Sisa', style: TextStyle(fontSize: 11)),
                       const SizedBox(height: 2),
                       Text(
                         currencyFormatter.format(remaining),
                         style: const TextStyle(
                           fontSize: 13,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
                         ),
                       ),
                     ],
@@ -540,17 +582,12 @@ class _BudgetCard extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.black.withAlpha(20),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Center(
                   child: Text(
                     'Limit: ${currencyFormatter.format(budget.amountLimit)}',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.white,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
                   ),
                 ),
               ),
@@ -687,8 +724,6 @@ class _BudgetFormState extends ConsumerState<_BudgetForm> {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
 
-    final navigator = Navigator.of(context);
-    final messenger = ScaffoldMessenger.of(context);
     final amount =
         double.tryParse(_amountController.text.replaceAll('.', '')) ?? 0.0;
     final repo = ref.read(budgetRepositoryProvider);
@@ -707,7 +742,8 @@ class _BudgetFormState extends ConsumerState<_BudgetForm> {
         await repo.updateBudget(updatedBudget);
       } else {
         if (_selectedCategory == null) {
-          messenger.showSnackBar(
+          if (!mounted) return;
+          ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Pilih kategori terlebih dahulu.')),
           );
           return;
@@ -722,9 +758,11 @@ class _BudgetFormState extends ConsumerState<_BudgetForm> {
         );
         await repo.createBudget(newBudget);
       }
-      navigator.pop();
+      if (!mounted) return;
+      Navigator.of(context).pop();
     } catch (e) {
-      messenger.showSnackBar(
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal menyimpan budget: ${e.toString()}')),
       );
     }

@@ -4,6 +4,7 @@ class UserProfile {
   final String? displayName;
   final String? phoneNumber;
   final DateTime? updatedAt;
+  final String? defaultWalletId;
 
   UserProfile({
     required this.id,
@@ -11,6 +12,7 @@ class UserProfile {
     this.displayName,
     this.phoneNumber,
     this.updatedAt,
+    this.defaultWalletId,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -22,6 +24,7 @@ class UserProfile {
       updatedAt: json['updated_at'] != null
           ? DateTime.parse(json['updated_at'] as String)
           : null,
+      defaultWalletId: json['default_wallet_id'] as String?,
     );
   }
 
@@ -32,6 +35,7 @@ class UserProfile {
       'display_name': displayName,
       'phone_number': phoneNumber,
       'updated_at': updatedAt?.toIso8601String(),
+      'default_wallet_id': defaultWalletId,
     };
   }
 
@@ -41,6 +45,7 @@ class UserProfile {
     String? displayName,
     String? phoneNumber,
     DateTime? updatedAt,
+    String? defaultWalletId,
   }) {
     return UserProfile(
       id: id ?? this.id,
@@ -48,6 +53,7 @@ class UserProfile {
       displayName: displayName ?? this.displayName,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       updatedAt: updatedAt ?? this.updatedAt,
+      defaultWalletId: defaultWalletId ?? this.defaultWalletId,
     );
   }
 }

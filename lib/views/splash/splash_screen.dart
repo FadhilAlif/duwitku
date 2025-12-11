@@ -41,7 +41,29 @@ class _SplashScreenState extends State<SplashScreen>
 
     final session = Supabase.instance.client.auth.currentSession;
     if (session != null) {
-      context.go('/main');
+      try {
+        final userId = session.user.id;
+        final data = await Supabase.instance.client
+            .from('profiles')
+            .select('phone_number')
+            .eq('id', userId)
+            .maybeSingle();
+
+        if (data == null) {
+          // Profile row missing, treat as phone missing
+          if (mounted) context.go('/input_phone');
+        } else {
+          final phoneNumber = data['phone_number'] as String?;
+          if (phoneNumber == null || phoneNumber.isEmpty) {
+            if (mounted) context.go('/input_phone');
+          } else {
+            if (mounted) context.go('/main');
+          }
+        }
+      } catch (e) {
+        // Fallback to main if error occurs to avoid blocking user
+        if (mounted) context.go('/main');
+      }
     } else {
       context.go('/login');
     }

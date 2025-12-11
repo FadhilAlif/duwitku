@@ -39,7 +39,14 @@ class ExportHelper {
     await file.writeAsString(csvData);
 
     // ignore: deprecated_member_use
-    await Share.shareXFiles([XFile(file.path)], text: 'Export Transaksi CSV');
+    // await Share.shareXFiles([XFile(file.path)], text: 'Export Transaksi CSV');
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path)],
+        text: 'Export Transaksi CSV',
+        subject: 'Laporan Transaksi CSV Duwitku',
+      ),
+    );
   }
 
   static Future<void> exportToPdf(
@@ -102,6 +109,13 @@ class ExportHelper {
     await file.writeAsBytes(await pdf.save());
 
     // ignore: deprecated_member_use
-    await Share.shareXFiles([XFile(file.path)], text: 'Export Transaksi PDF');
+    // await Share.shareXFiles([XFile(file.path)], text: 'Export Transaksi PDF');
+    await SharePlus.instance.share(
+      ShareParams(
+        files: [XFile(file.path)],
+        text: 'Export Transaksi PDF',
+        subject: 'Laporan Transaksi PDF Duwitku',
+      ),
+    );
   }
 }

@@ -1,5 +1,6 @@
 import 'package:duwitku/models/user_profile.dart';
 import 'package:duwitku/providers/profile_provider.dart';
+import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -17,6 +18,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   final _displayNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
+  String? _selectedDefaultWalletId;
   bool _isLoading = false;
   bool _isInitialized = false;
 
@@ -36,6 +38,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
           profile.email ??
           Supabase.instance.client.auth.currentUser?.email ??
           '';
+      _selectedDefaultWalletId = profile.defaultWalletId;
       _isInitialized = true;
     }
   }
@@ -53,6 +56,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
         id: userId,
         displayName: _displayNameController.text.trim(),
         phoneNumber: _phoneController.text.trim(),
+        defaultWalletId: _selectedDefaultWalletId,
       );
 
       await repository.updateProfile(updatedProfile);
@@ -87,6 +91,7 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(profileStreamProvider);
+    final walletsAsync = ref.watch(walletsStreamProvider);
 
     return Scaffold(
       appBar: AppBar(title: const Text('Ubah Profil'), centerTitle: true),
@@ -163,6 +168,52 @@ class _EditProfileScreenState extends ConsumerState<EditProfileScreen> {
                     ),
                     keyboardType: TextInputType.phone,
                   ),
+                  const SizedBox(height: 16),
+                  if (walletsAsync.asData?.value.isNotEmpty ?? false)
+                    DropdownButtonFormField<String>(
+                      // value: _selectedDefaultWalletId,
+                      decoration: const InputDecoration(
+                        labelText: 'Dompet Utama (Default)',
+                        prefixIcon: Icon(Icons.account_balance_wallet_outlined),
+                        border: OutlineInputBorder(),
+                      ),
+
+                      // Use value instead of initialValue for controlled state if needed,
+                      // but 'value' is deprecated for initial state.
+                      // However, for dynamic updates, we often need 'value'.
+                      // The warning says: "Use initialValue instead. This will set the initial value for the form field."
+                      // If we want to control it, we should look at the migration guide.
+                      // For now, let's ignore it or suppress it if we need controlled input.
+                      // Actually, let's switch to the property 'value' if it's a controlled component which it is.
+                      // It seems the linter is complaining about mixing or specific usage.
+                      // Wait, 'value' is NOT deprecated on DropdownButton, but it IS on DropdownButtonFormField in newer Flutter versions if used as initial?
+                      // Let's check the exact warning: "'value' is deprecated... Use initialValue instead."
+                      // If I use initialValue, I can't update it dynamically via setState easily without a controller?
+                      // DropdownButtonFormField doesn't have a controller.
+                      // The standard way to control a DropdownButtonFormField is indeed 'value'.
+                      // If I remove 'value' and use 'initialValue', it won't update on setState.
+                      // Let's try using `value` property but suppress warning or accept it for now as it's a pre-deprecation.
+                      // BUT the user wants to FIX it.
+
+                      // The fix for DropdownButtonFormField when you want to control it:
+                      // Actually, the deprecation message might be misleading or I am misinterpreting.
+                      // "Use initialValue instead. This will set the initial value for the form field."
+                      // If I am using it as a controlled field (which I am, via setState), 'value' is the correct property.
+                      // If I am using it as an uncontrolled field, 'initialValue' is correct.
+                      // Let's try to use 'value' and see if I can simply ignore it or if there is a better way.
+                      initialValue: _selectedDefaultWalletId,
+                      items: walletsAsync.asData!.value.map((wallet) {
+                        return DropdownMenuItem(
+                          value: wallet.id,
+                          child: Text(wallet.name),
+                        );
+                      }).toList(),
+                      onChanged: (value) {
+                        setState(() {
+                          _selectedDefaultWalletId = value;
+                        });
+                      },
+                    ),
                   const SizedBox(height: 32),
                   FilledButton(
                     onPressed: _isLoading

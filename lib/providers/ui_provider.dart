@@ -19,7 +19,7 @@ final bottomNavIndexProvider = NotifierProvider<BottomNavIndexNotifier, int>(
 // Visibility toggle for balance/income/expense on Home Screen
 class BalanceVisibilityNotifier extends Notifier<bool> {
   @override
-  bool build() => true;
+  bool build() => false; // Default hidden
 
   void toggle() {
     state = !state;
@@ -29,4 +29,19 @@ class BalanceVisibilityNotifier extends Notifier<bool> {
 final isBalanceVisibleProvider =
     NotifierProvider<BalanceVisibilityNotifier, bool>(() {
       return BalanceVisibilityNotifier();
+    });
+
+// Visibility toggle for wallet balance
+class WalletBalanceVisibilityNotifier extends Notifier<bool> {
+  @override
+  bool build() => false; // Default hidden
+
+  void toggle() {
+    state = !state;
+  }
+}
+
+final isWalletBalanceVisibleProvider =
+    NotifierProvider<WalletBalanceVisibilityNotifier, bool>(() {
+      return WalletBalanceVisibilityNotifier();
     });

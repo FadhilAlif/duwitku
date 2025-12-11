@@ -5,12 +5,14 @@ class ReceiptItem {
   double amount;
   TransactionType type;
   int? categoryId; // Nullable, to be filled by user or smart matching
+  String? walletId;
 
   ReceiptItem({
     required this.description,
     required this.amount,
     required this.type,
     this.categoryId,
+    this.walletId,
   });
 
   factory ReceiptItem.fromJson(Map<String, dynamic> json) {
@@ -21,6 +23,7 @@ class ReceiptItem {
           ? TransactionType.income
           : TransactionType.expense,
       categoryId: json['category_id'] as int?,
+      walletId: json['wallet_id'] as String?,
     );
   }
 }

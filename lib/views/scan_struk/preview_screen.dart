@@ -1,19 +1,21 @@
 import 'dart:io';
 import 'package:duwitku/models/receipt_item.dart';
+import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:duwitku/services/receipt_service.dart';
 import 'package:duwitku/views/scan_struk/receipt_review_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class PreviewScreen extends StatefulWidget {
+class PreviewScreen extends ConsumerStatefulWidget {
   final String imagePath;
 
   const PreviewScreen({super.key, required this.imagePath});
 
   @override
-  State<PreviewScreen> createState() => _PreviewScreenState();
+  ConsumerState<PreviewScreen> createState() => _PreviewScreenState();
 }
 
-class _PreviewScreenState extends State<PreviewScreen> {
+class _PreviewScreenState extends ConsumerState<PreviewScreen> {
   bool _isLoading = false;
   String _loadingStatus = '';
   final _receiptService = ReceiptService();
@@ -21,16 +23,19 @@ class _PreviewScreenState extends State<PreviewScreen> {
   Future<void> _processReceipt() async {
     setState(() {
       _isLoading = true;
-      _loadingStatus = 'Mengunggah gambar...';
+      _loadingStatus = 'Menganalisis struk...';
     });
 
     try {
       final file = File(widget.imagePath);
 
+      // Fetch wallets to pass to service for AI context
+      final wallets = await ref.read(walletsStreamProvider.future);
+
       // Execute upload and analysis in parallel for efficiency
       final results = await Future.wait([
         _receiptService.uploadReceiptImage(file),
-        _receiptService.analyzeReceipt(file),
+        _receiptService.analyzeReceipt(file, wallets),
       ]);
 
       final imageUrl = results[0] as String;
@@ -67,6 +72,9 @@ class _PreviewScreenState extends State<PreviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch the provider to ensure it stays alive and data is loaded
+    ref.watch(walletsStreamProvider);
+
     return Scaffold(
       backgroundColor: Colors.black,
       appBar: AppBar(

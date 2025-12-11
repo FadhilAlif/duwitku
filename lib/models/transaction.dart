@@ -1,6 +1,6 @@
 enum TransactionType { income, expense }
 
-enum SourceType { app, receiptScan, chatPrompt, initial }
+enum SourceType { app, receiptScan, chatPrompt, voiceInput, initial }
 
 extension SourceTypeExtension on SourceType {
   String get toSnakeCase {
@@ -11,6 +11,8 @@ extension SourceTypeExtension on SourceType {
         return 'receipt_scan';
       case SourceType.chatPrompt:
         return 'chat_prompt';
+      case SourceType.voiceInput:
+        return 'voice_input';
       case SourceType.initial:
         return 'initial';
     }
@@ -37,6 +39,8 @@ extension StringExtension on String {
         return SourceType.receiptScan;
       case 'chat_prompt':
         return SourceType.chatPrompt;
+      case 'voice_input':
+        return SourceType.voiceInput;
       case 'initial':
         return SourceType.initial;
       default:
@@ -55,6 +59,7 @@ class Transaction {
   final String? description;
   final SourceType sourceType;
   final String? receiptImageUrl;
+  final String walletId;
 
   Transaction({
     required this.id,
@@ -66,18 +71,28 @@ class Transaction {
     this.description,
     required this.sourceType,
     this.receiptImageUrl,
+    required this.walletId,
   });
 
   Map<String, dynamic> toJson() {
+    // Format timestamp to match bot format (milliseconds precision)
+    // Example: 2025-11-26T07:54:09.684Z
+    final utcDate = transactionDate.toUtc();
+    final formattedDate = utcDate.toIso8601String().replaceAllMapped(
+      RegExp(r'\.(\d{3})\d*Z$'),
+      (match) => '.${match.group(1)}Z',
+    );
+
     return {
       'user_id': userId,
       'category_id': categoryId,
       'amount': amount,
-      'transaction_date': transactionDate.toIso8601String(),
+      'transaction_date': formattedDate,
       'type': type.name,
       'description': description,
       'source_type': sourceType.toSnakeCase,
       'receipt_image_url': receiptImageUrl,
+      'wallet_id': walletId,
     };
   }
 
@@ -92,6 +107,7 @@ class Transaction {
       description: json['description'] as String?,
       sourceType: (json['source_type'] as String).toSourceType,
       receiptImageUrl: json['receipt_image_url'] as String?,
+      walletId: json['wallet_id'] as String,
     );
   }
 }

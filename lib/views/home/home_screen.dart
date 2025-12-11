@@ -1,11 +1,14 @@
 import 'package:duwitku/models/category.dart';
+import 'package:duwitku/models/wallet.dart';
 import 'package:duwitku/providers/category_provider.dart';
 import 'package:duwitku/providers/transaction_provider.dart';
 import 'package:duwitku/providers/ui_provider.dart';
+import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:duwitku/models/transaction.dart' as t;
 import 'package:duwitku/utils/icon_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:skeletonizer/skeletonizer.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -18,10 +21,20 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
+    final previousTransactionsAsync = ref.watch(
+      previousMonthTransactionsStreamProvider,
+    );
     final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final walletsAsync = ref.watch(walletsStreamProvider);
+    final totalAssetsAsync = ref.watch(totalAssetsProvider);
     final isBalanceVisible = ref.watch(isBalanceVisibleProvider);
 
-    final isLoading = transactionsAsync.isLoading || categoriesAsync.isLoading;
+    final isLoading =
+        transactionsAsync.isLoading ||
+        categoriesAsync.isLoading ||
+        walletsAsync.isLoading ||
+        totalAssetsAsync.isLoading ||
+        previousTransactionsAsync.isLoading;
 
     // Generate dummy data for loading state
     final transactions = isLoading
@@ -38,9 +51,14 @@ class HomeScreen extends ConsumerWidget {
                   : t.TransactionType.expense,
               sourceType: t.SourceType.app,
               description: 'Loading Transaction...',
+              walletId: 'dummy_wallet_id',
             ),
           )
         : transactionsAsync.asData?.value ?? [];
+
+    final previousTransactions = isLoading
+        ? <t.Transaction>[]
+        : previousTransactionsAsync.asData?.value ?? [];
 
     final categories = isLoading
         ? [
@@ -53,10 +71,29 @@ class HomeScreen extends ConsumerWidget {
           ]
         : categoriesAsync.asData?.value ?? [];
 
+    final wallets = isLoading
+        ? [
+            Wallet(
+              id: 'dummy_wallet_id',
+              userId: 'dummy',
+              name: 'Loading...',
+              initialBalance: 0,
+              type: WalletType.cash,
+              isActive: true,
+              createdAt: DateTime.now(),
+            ),
+          ]
+        : walletsAsync.asData?.value ?? [];
+
     final categoryMap = {for (var c in categories) c.id: c};
+    final walletMap = {for (var w in wallets) w.id: w};
 
     return Scaffold(
       appBar: AppBar(
+        leading: IconButton(
+          icon: const Icon(Icons.settings),
+          onPressed: () => context.push('/edit_profile'),
+        ),
         title: const Text(
           'Beranda',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -67,8 +104,27 @@ class HomeScreen extends ConsumerWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await Supabase.instance.client.auth.signOut();
+            onPressed: () {
+              showDialog(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  title: const Text('Konfirmasi Logout'),
+                  content: const Text('Apakah Anda yakin ingin keluar?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: const Text('Batal'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        Navigator.pop(ctx);
+                        await Supabase.instance.client.auth.signOut();
+                      },
+                      child: const Text('Logout'),
+                    ),
+                  ],
+                ),
+              );
             },
           ),
         ],
@@ -79,8 +135,11 @@ class HomeScreen extends ConsumerWidget {
           context,
           ref,
           transactions,
+          previousTransactions,
           categoryMap,
+          walletMap,
           isBalanceVisible,
+          totalAssetsAsync.asData?.value ?? 0,
         ),
       ),
     );
@@ -90,8 +149,11 @@ class HomeScreen extends ConsumerWidget {
     BuildContext context,
     WidgetRef ref,
     List<t.Transaction> transactions,
+    List<t.Transaction> previousTransactions,
     Map<int, Category> categoryMap,
+    Map<String, Wallet> walletMap,
     bool isBalanceVisible,
+    double totalAssets,
   ) {
     final totalIncome = transactions
         .where((trx) => trx.type == t.TransactionType.income)
@@ -99,7 +161,20 @@ class HomeScreen extends ConsumerWidget {
     final totalExpense = transactions
         .where((trx) => trx.type == t.TransactionType.expense)
         .fold(0.0, (sum, item) => sum + item.amount);
-    final balance = totalIncome - totalExpense;
+
+    // Calculate previous month expense for percentage
+    final prevTotalExpense = previousTransactions
+        .where((trx) => trx.type == t.TransactionType.expense)
+        .fold(0.0, (sum, item) => sum + item.amount);
+
+    double percentageChange = 0;
+    if (prevTotalExpense > 0) {
+      percentageChange =
+          ((totalExpense - prevTotalExpense) / prevTotalExpense) * 100;
+    } else if (totalExpense > 0) {
+      percentageChange =
+          100; // from 0 to something is 100% increase conceptually (or infinite)
+    }
 
     final now = DateTime.now();
     final todayTransactions = transactions.where((trx) {
@@ -111,6 +186,7 @@ class HomeScreen extends ConsumerWidget {
     return RefreshIndicator(
       onRefresh: () async {
         ref.invalidate(filteredTransactionsStreamProvider);
+        ref.invalidate(previousMonthTransactionsStreamProvider);
         ref.invalidate(categoriesStreamProvider);
         await Future.delayed(const Duration(milliseconds: 500));
       },
@@ -120,16 +196,17 @@ class HomeScreen extends ConsumerWidget {
           children: [
             const _MonthSelector(),
             _SummaryCard(
-              balance: balance,
+              totalAssets: totalAssets,
               totalIncome: totalIncome,
               totalExpense: totalExpense,
+              percentageChange: percentageChange,
               isVisible: isBalanceVisible,
               onToggleVisibility: () =>
                   ref.read(isBalanceVisibleProvider.notifier).toggle(),
             ),
             _TransactionsChart(transactions: transactions),
             Padding(
-              padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+              padding: const EdgeInsets.fromLTRB(16.0, 8.0, 16.0, 8.0),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -151,6 +228,7 @@ class HomeScreen extends ConsumerWidget {
               child: _TransactionList(
                 transactions: todayTransactions,
                 categoryMap: categoryMap,
+                walletMap: walletMap,
               ),
             ),
           ],
@@ -201,16 +279,18 @@ class _MonthSelector extends ConsumerWidget {
 }
 
 class _SummaryCard extends StatelessWidget {
-  final double balance;
+  final double totalAssets;
   final double totalIncome;
   final double totalExpense;
+  final double percentageChange;
   final bool isVisible;
   final VoidCallback onToggleVisibility;
 
   const _SummaryCard({
-    required this.balance,
+    required this.totalAssets,
     required this.totalIncome,
     required this.totalExpense,
+    required this.percentageChange,
     required this.isVisible,
     required this.onToggleVisibility,
   });
@@ -223,9 +303,12 @@ class _SummaryCard extends StatelessWidget {
       decimalDigits: 0,
     );
 
+    final now = DateTime.now();
+    final dateText = DateFormat('EEEE, d MMM', 'id_ID').format(now);
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(20),
         gradient: LinearGradient(
@@ -245,35 +328,104 @@ class _SummaryCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Date and Percentage in one compact row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Total Saldo',
-                style: TextStyle(color: Colors.white, fontSize: 16),
+              Text(
+                dateText,
+                style: const TextStyle(color: Colors.white, fontSize: 12),
               ),
-              IconButton(
-                icon: Icon(
-                  isVisible ? Icons.visibility : Icons.visibility_off,
-                  color: Colors.white,
-                ),
-                onPressed: onToggleVisibility,
-                visualDensity: VisualDensity.compact,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withAlpha(51),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          percentageChange >= 0
+                              ? Icons.arrow_upward
+                              : Icons.arrow_downward,
+                          color: percentageChange > 0
+                              ? Colors.redAccent.shade200
+                              : Colors.lightGreenAccent.shade100,
+                          size: 10,
+                        ),
+                        const SizedBox(width: 2),
+                        Text(
+                          '${percentageChange.abs().toStringAsFixed(1)}% ${percentageChange >= 0 ? 'Naik' : 'Turun'}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: Icon(
+                      isVisible
+                          ? Icons.visibility_outlined
+                          : Icons.visibility_off_outlined,
+                      color: Colors.white,
+                      size: 18,
+                    ),
+                    onPressed: onToggleVisibility,
+                    visualDensity: VisualDensity.compact,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            isVisible ? currencyFormatter.format(balance) : 'Rp ********',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 32,
-              fontWeight: FontWeight.bold,
-            ),
+          const SizedBox(height: 12),
+          // Pengeluaran (Expense) - Highlighted First
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Total Pengeluaran',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  Icon(
+                    Icons.arrow_upward,
+                    color: Colors.redAccent.shade200,
+                    size: 20,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    isVisible
+                        ? currencyFormatter.format(totalExpense)
+                        : 'Rp ********',
+                    style: TextStyle(
+                      color: Colors.redAccent.shade200,
+                      fontSize: 28,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 12),
+          // Income and Balance Row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -281,14 +433,14 @@ class _SummaryCard extends StatelessWidget {
                 icon: Icons.arrow_downward,
                 title: 'Pemasukan',
                 amount: totalIncome,
-                color: Colors.white,
+                color: Colors.lightGreenAccent.shade400,
                 formatter: currencyFormatter,
                 isVisible: isVisible,
               ),
               _SummaryItem(
-                icon: Icons.arrow_upward,
-                title: 'Pengeluaran',
-                amount: totalExpense,
+                icon: Icons.account_balance_wallet_outlined,
+                title: 'Total Aset',
+                amount: totalAssets,
                 color: Colors.white,
                 formatter: currencyFormatter,
                 isVisible: isVisible,
@@ -320,31 +472,35 @@ class _SummaryItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Icon(icon, color: color, size: 20),
-        const SizedBox(width: 8),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                color: color.withAlpha((255 * 0.8).round()),
-                fontSize: 14,
-              ),
+    return Expanded(
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(color: Colors.white, fontSize: 11),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isVisible ? formatter.format(amount) : '****',
+                  style: TextStyle(
+                    color: color,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
             ),
-            Text(
-              isVisible ? formatter.format(amount) : '********',
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
-          ],
-        ),
-      ],
+          ),
+        ],
+      ),
     );
   }
 }
@@ -359,94 +515,138 @@ class _TransactionsChart extends StatelessWidget {
     final dailySummary = _calculateDailySummary(transactions);
 
     return Container(
-      height: 120,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: BarChart(
-        BarChartData(
-          alignment: BarChartAlignment.spaceAround,
-          maxY: _calculateMaxY(dailySummary),
-          barTouchData: BarTouchData(
-            enabled: true,
-            touchTooltipData: BarTouchTooltipData(
-              getTooltipColor: (group) => Colors.blueGrey,
-              tooltipPadding: const EdgeInsets.all(8),
-              tooltipMargin: 8,
-              getTooltipItem: (group, groupIndex, rod, rodIndex) {
-                final currencyFormatter = NumberFormat.currency(
-                  locale: 'id_ID',
-                  symbol: 'Rp ',
-                  decimalDigits: 0,
-                );
-                return BarTooltipItem(
-                  currencyFormatter.format(rod.toY),
-                  const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: 14,
+      margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(borderRadius: BorderRadius.circular(16)),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(height: 6),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Aktivitas 7 Hari Terakhir',
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+              ),
+              Row(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.lightGreenAccent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
                   ),
-                );
-              },
-            ),
+                  const SizedBox(width: 4),
+                  const Text('Masuk', style: TextStyle(fontSize: 11)),
+                  const SizedBox(width: 12),
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: Colors.redAccent,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Text('Keluar', style: TextStyle(fontSize: 11)),
+                ],
+              ),
+            ],
           ),
-          titlesData: FlTitlesData(
-            show: true,
-            bottomTitles: AxisTitles(
-              sideTitles: SideTitles(
-                showTitles: true,
-                getTitlesWidget: (double value, TitleMeta meta) {
-                  if (value.toInt() < 0 ||
-                      value.toInt() >= dailySummary.length) {
-                    return const SizedBox.shrink();
-                  }
-                  final day = dailySummary[value.toInt()].day;
-                  return Text(
-                    DateFormat('E', 'id_ID').format(day).substring(0, 1),
-                    style: const TextStyle(fontSize: 12),
+          SizedBox(
+            height: 140,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: _calculateMaxY(dailySummary),
+                barTouchData: BarTouchData(
+                  enabled: true,
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipColor: (group) => Colors.blueGrey,
+                    tooltipPadding: const EdgeInsets.all(8),
+                    tooltipMargin: 8,
+                    getTooltipItem: (group, groupIndex, rod, rodIndex) {
+                      final currencyFormatter = NumberFormat.currency(
+                        locale: 'id_ID',
+                        symbol: 'Rp ',
+                        decimalDigits: 0,
+                      );
+                      return BarTooltipItem(
+                        currencyFormatter.format(rod.toY),
+                        const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                        ),
+                      );
+                    },
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (double value, TitleMeta meta) {
+                        if (value.toInt() < 0 ||
+                            value.toInt() >= dailySummary.length) {
+                          return const SizedBox.shrink();
+                        }
+                        final day = dailySummary[value.toInt()].day;
+                        return Text(
+                          DateFormat('E', 'id_ID').format(day).substring(0, 1),
+                          style: const TextStyle(fontSize: 12),
+                        );
+                      },
+                      reservedSize: 24,
+                    ),
+                  ),
+                  leftTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  topTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                  rightTitles: const AxisTitles(
+                    sideTitles: SideTitles(showTitles: false),
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                gridData: const FlGridData(show: false),
+                barGroups: dailySummary.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final summary = entry.value;
+                  return BarChartGroupData(
+                    x: index,
+                    barRods: [
+                      BarChartRodData(
+                        toY: summary.expense,
+                        color: Colors.redAccent,
+                        width: 8,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(4),
+                          topRight: Radius.circular(4),
+                        ),
+                      ),
+                      BarChartRodData(
+                        toY: summary.income,
+                        color: Colors.lightGreenAccent,
+                        width: 8,
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(4),
+                          topRight: Radius.circular(4),
+                        ),
+                      ),
+                    ],
                   );
-                },
-                reservedSize: 24,
+                }).toList(),
               ),
             ),
-            leftTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            topTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
-            rightTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
-            ),
           ),
-          borderData: FlBorderData(show: false),
-          gridData: const FlGridData(show: false),
-          barGroups: dailySummary.asMap().entries.map((entry) {
-            final index = entry.key;
-            final summary = entry.value;
-            return BarChartGroupData(
-              x: index,
-              barRods: [
-                BarChartRodData(
-                  toY: summary.expense,
-                  color: Colors.redAccent,
-                  width: 8,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(4),
-                    topRight: Radius.circular(4),
-                  ),
-                ),
-                BarChartRodData(
-                  toY: summary.income,
-                  color: Colors.lightGreenAccent,
-                  width: 8,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(4),
-                    topRight: Radius.circular(4),
-                  ),
-                ),
-              ],
-            );
-          }).toList(),
-        ),
+        ],
       ),
     );
   }
@@ -511,16 +711,18 @@ class _DailySummary {
 class _TransactionList extends StatelessWidget {
   final List<t.Transaction> transactions;
   final Map<int, Category> categoryMap;
+  final Map<String, Wallet> walletMap;
 
   const _TransactionList({
     required this.transactions,
     required this.categoryMap,
+    required this.walletMap,
   });
 
   @override
   Widget build(BuildContext context) {
     if (transactions.isEmpty) {
-      return const Center(child: Text('Tidak ada transaksi bulan ini.'));
+      return const Center(child: Text('Tidak ada transaksi hari ini.'));
     }
 
     final groupedTransactions = groupBy(
@@ -530,7 +732,7 @@ class _TransactionList extends StatelessWidget {
     );
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
       itemCount: groupedTransactions.keys.length,
       itemBuilder: (context, index) {
         final dateString = groupedTransactions.keys.elementAt(index);
@@ -541,6 +743,7 @@ class _TransactionList extends StatelessWidget {
           date: date,
           transactions: dayTransactions,
           categoryMap: categoryMap,
+          walletMap: walletMap,
         );
       },
     );
@@ -551,11 +754,13 @@ class _TransactionGroup extends StatelessWidget {
   final DateTime date;
   final List<t.Transaction> transactions;
   final Map<int, Category> categoryMap;
+  final Map<String, Wallet> walletMap;
 
   const _TransactionGroup({
     required this.date,
     required this.transactions,
     required this.categoryMap,
+    required this.walletMap,
   });
 
   @override
@@ -567,7 +772,7 @@ class _TransactionGroup extends StatelessWidget {
     );
 
     return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
+      margin: const EdgeInsets.only(bottom: 8.0),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Column(
         children: [
@@ -596,6 +801,7 @@ class _TransactionGroup extends StatelessWidget {
           const Divider(height: 1),
           ...transactions.map((transaction) {
             final category = categoryMap[transaction.categoryId];
+            final wallet = walletMap[transaction.walletId];
             final isIncome = transaction.type == t.TransactionType.income;
             return ListTile(
               leading: CircleAvatar(
@@ -612,7 +818,30 @@ class _TransactionGroup extends StatelessWidget {
                 transaction.description ?? category?.name ?? 'T/A',
                 style: const TextStyle(fontWeight: FontWeight.w500),
               ),
-              subtitle: Text(category?.name ?? 'Tanpa Kategori'),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(category?.name ?? 'Tanpa Kategori'),
+                  if (wallet != null)
+                    Row(
+                      children: [
+                        Icon(
+                          _getWalletIcon(wallet.type),
+                          size: 12,
+                          color: Colors.grey,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          wallet.name,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                ],
+              ),
               trailing: Text(
                 '${isIncome ? '+' : '-'} ${currencyFormatter.format(transaction.amount)}',
                 style: TextStyle(
@@ -659,6 +888,21 @@ class _TransactionGroup extends StatelessWidget {
       return '+${formatter.format(total)}';
     } else {
       return formatter.format(total);
+    }
+  }
+
+  IconData _getWalletIcon(WalletType type) {
+    switch (type) {
+      case WalletType.bank:
+        return Icons.account_balance_rounded;
+      case WalletType.cash:
+        return Icons.payments_rounded;
+      case WalletType.eWallet:
+        return Icons.account_balance_wallet_rounded;
+      case WalletType.investment:
+        return Icons.trending_up_rounded;
+      case WalletType.other:
+        return Icons.category_rounded;
     }
   }
 }

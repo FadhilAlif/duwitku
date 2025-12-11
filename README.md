@@ -4,16 +4,19 @@ Duwitku is a comprehensive personal finance management application built with **
 
 ## ✨ Key Features
 
-- **📊 Smart Dashboard**: Get a quick overview of your balance, recent transactions, and budget status with smooth loading animations (Skeletonizer).
-- **💸 Transaction Management**: Record income and expenses with detailed categories.
-- **🧾 Receipt Scanning**: Scan physical receipts using the camera, automatically processing images for attachment and verification.
-- **💰 Budget Planning**: Set monthly budgets for different categories to keep your spending in check.
-- **📈 Visual Analytics**: Visualize your spending patterns with interactive charts using `fl_chart`.
-- **🤖 AI Assistant**: Integrated Chat Prompt feature to assist with financial queries.
-- **☁️ Cloud Sync**: Real-time data synchronization and secure storage using **Supabase**.
-- **🔐 Secure Authentication**: Support for Email/Password login and Google Sign-In.
-- **📤 Data Export**: Export your financial reports to **CSV** and **PDF** formats for external analysis.
-- **🎨 Modern UI**: Beautiful design with **Flex Color Scheme**, supporting adaptive light and dark modes.
+- **📊 Smart Dashboard**: Get a quick overview of your total assets, recent transactions, and budget status with smooth loading animations (Skeletonizer).
+- **💼 Multi-Wallet Management**: Create and manage multiple wallets (e.g., Cash, Bank, E-wallet) with separate balances and transaction tracking. Toggle balance visibility for privacy.
+- **💸 Transaction Management**: Record income and expenses with detailed categories. Support for time selection, wallet assignment, and multiple input methods.
+- **🧾 Receipt Scanning**: Scan physical receipts using the camera with advanced lifecycle management and error handling. Automatically process images with AI for transaction extraction.
+- **🎤 Voice Input**: Log transactions naturally using speech recognition. Just speak your transaction details, and AI will automatically categorize and parse the information.
+- **💰 Budget Planning**: Set monthly budgets for different categories with progress tracking and days remaining indicators.
+- **📈 Visual Analytics**: Comprehensive analytics dashboard with interactive charts using `fl_chart`. View spending patterns, category breakdowns, and month-over-month comparisons.
+- **🏦 Finance Hub**: Centralized hub with tab navigation for analytics, budgets, and wallet management - all in one place.
+- **🤖 AI Assistant**: Integrated Chat Prompt feature powered by Google Gemini AI to assist with financial queries, transaction categorization, and wallet categorization.
+- **☁️ Cloud Sync**: Real-time data synchronization and secure storage using **Supabase** with Row Level Security.
+- **🔐 Secure Authentication**: Support for Email/Password login and Google Sign-In with phone number verification.
+- **📤 Data Export**: Export your financial reports to **CSV** and **PDF** formats using SharePlus for external analysis.
+- **🎨 Modern UI**: Beautiful design with **Flex Color Scheme**, supporting adaptive light and dark modes with Material 3.
 
 ## 🛠 Tech Stack
 
@@ -29,7 +32,11 @@ This project utilizes a robust and modern tech stack:
   - `google_nav_bar` for navigation
   - `flutter_slidable` for list actions
   - `skeletonizer` for loading states
-- **Utils**: `flutter_image_compress`, `image_cropper`, `intl`, `logger`
+  - `fl_chart` for data visualization
+- **AI & Speech**:
+  - `google_generative_ai` for Gemini AI integration
+  - `speech_to_text` for voice input
+- **Utils**: `flutter_image_compress`, `image_cropper`, `intl`, `logger`, `share_plus`
 
 ## 🏗️ System Architecture
 
@@ -42,7 +49,7 @@ Duwitku implements a multi-platform ecosystem with seamless integration between 
 │  📱 Flutter MobileApp        │  💬 WhatsApp Bot (duwitku-bot) │
 │  - iOS & Android              │  - WAHA API Integration         │
 │  - Receipt Scanning           │  - Natural Language Input       │
-│                               │  - AI Auto-Categorization       │
+│  - Voice Input                │  - AI Auto-Categorization       │
 └────────────┬──────────────────┴────────────────┬────────────────┘
              │                                   │
              │         ┌─────────────────────────┘
@@ -64,7 +71,8 @@ Duwitku implements a multi-platform ecosystem with seamless integration between 
     ├────────────────────────────────────┤
     │  🤖 Google Gemini AI               │
     │     - Receipt OCR & Analysis       │
-    │     - Transaction Categorization   │
+    │     - Transaction Categorization   |
+    |     - Wallet Categorization        │
     │  🔑 Google OAuth                   │
     │     - Social Sign-In               │
     └────────────────────────────────────┘
@@ -114,8 +122,11 @@ lib/
 │   ├── budget.dart
 │   ├── category.dart
 │   ├── transaction.dart
+│   ├── transaction_filter_state.dart
 │   ├── user_profile.dart
-│   └── receipt_item.dart
+│   ├── wallet.dart
+│   ├── receipt_item.dart
+│   └── camera_model.dart
 ├── presenters/     # UI Logic and ViewModels
 │   └── auth_presenter.dart
 ├── providers/      # Riverpod providers for dependency injection
@@ -123,25 +134,34 @@ lib/
 │   ├── category_provider.dart
 │   ├── transaction_provider.dart
 │   ├── profile_provider.dart
+│   ├── wallet_provider.dart
+│   ├── gemini_provider.dart
 │   └── ui_provider.dart
 ├── repositories/   # Data access layer (Supabase integration)
 │   ├── budget_repository.dart
 │   ├── category_repository.dart
 │   ├── transaction_repository.dart
-│   └── profile_repository.dart
-├── services/       # External services (e.g., Receipt Service, Camera)
-│   └── receipt_service.dart
+│   ├── profile_repository.dart
+│   └── wallet_repository.dart
+├── services/       # External services (AI, Receipt, etc.)
+│   ├── receipt_service.dart
+│   └── gemini_service.dart
 ├── utils/          # Helper functions and constants
 │   ├── router.dart
 │   ├── icon_helper.dart
 │   └── export_helper.dart
-├── views/          # UI Screens (Home, Transaction, Budget, Auth, etc.)
+├── views/          # UI Screens
 │   ├── auth/
 │   ├── home/
 │   ├── transaction/
 │   ├── budget/
+│   ├── analytics/
+│   ├── finance_hub/
+│   ├── wallet/
 │   ├── profile/
 │   ├── scan_struk/
+│   ├── voice_input/
+│   ├── input_phone/
 │   └── chat_prompt/
 └── widgets/        # Reusable UI components
     └── app_logo.dart
@@ -154,13 +174,29 @@ The application uses Supabase PostgreSQL with the following core tables:
 ### `profiles`
 
 ```sql
-id              UUID PRIMARY KEY
-email           TEXT UNIQUE
-full_name       TEXT
-phone_number    TEXT
-avatar_url      TEXT
-created_at      TIMESTAMP
-updated_at      TIMESTAMP
+id                  UUID PRIMARY KEY
+email               TEXT UNIQUE
+full_name           TEXT
+phone_number        TEXT
+avatar_url          TEXT
+wallet_id           BIGINT REFERENCES wallets(id)
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
+```
+
+### `wallets`
+
+```sql
+id                  BIGINT PRIMARY KEY
+user_id             UUID REFERENCES profiles(id)
+name                TEXT NOT NULL
+type                TEXT CHECK (type IN ('cash', 'bank', 'e-wallet', 'investment'))
+balance             NUMERIC DEFAULT 0
+icon                TEXT
+color               TEXT
+is_visible          BOOLEAN DEFAULT TRUE
+created_at          TIMESTAMP
+updated_at          TIMESTAMP
 ```
 
 ### `categories`
@@ -182,12 +218,13 @@ created_at      TIMESTAMP
 id                  BIGINT PRIMARY KEY
 user_id             UUID REFERENCES profiles(id)
 category_id         BIGINT REFERENCES categories(id)
+wallet_id           BIGINT REFERENCES wallets(id)
 amount              NUMERIC NOT NULL
 type                TEXT CHECK (type IN ('income', 'expense'))
 description         TEXT
 transaction_date    TIMESTAMP NOT NULL
 receipt_url         TEXT
-source_type         TEXT DEFAULT 'app'
+source_type         TEXT CHECK (source_type IN ('app', 'whatsapp', 'receipt', 'voice'))
 created_at          TIMESTAMP
 updated_at          TIMESTAMP
 ```
@@ -217,7 +254,7 @@ A complementary service that enables transaction logging via WhatsApp messaging:
 **Key Features:**
 
 - 📝 **Natural Language Processing**: Log expenses by simply chatting
-- 🤖 **AI Auto-Categorization**: Gemini AI automatically categorizes transactions
+- 🤖 **AI Auto-Categorization**: Gemini AI automatically categorizes transactions and wallet
 - 💬 **Conversational Interface**: No need to remember specific formats
 - 🔄 **Real-time Sync**: Instantly syncs with your Duwitku mobile app
 - 📊 **Batch Entry**: Record multiple transactions in one WhatsApp Message
@@ -226,7 +263,7 @@ A complementary service that enables transaction logging via WhatsApp messaging:
 
 ```text
 User:
-Expenses 
+Expenses
 Mie ayam 15000
 bensin 50k
 kopi 12k

@@ -1,7 +1,9 @@
 import 'package:duwitku/models/category.dart';
+import 'package:duwitku/models/wallet.dart';
 import 'package:duwitku/models/transaction.dart' as t;
 import 'package:duwitku/providers/category_provider.dart';
 import 'package:duwitku/providers/transaction_provider.dart';
+import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:duwitku/utils/export_helper.dart';
 import 'package:duwitku/utils/icon_helper.dart';
 import 'package:duwitku/views/transaction/transaction_filter_sheet.dart';
@@ -30,8 +32,12 @@ class TransactionScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final transactionsAsync = ref.watch(filteredTransactionsStreamProvider);
     final categoriesAsync = ref.watch(categoriesStreamProvider);
+    final walletsAsync = ref.watch(walletsStreamProvider);
 
-    final isLoading = transactionsAsync.isLoading || categoriesAsync.isLoading;
+    final isLoading =
+        transactionsAsync.isLoading ||
+        categoriesAsync.isLoading ||
+        walletsAsync.isLoading;
 
     final transactions = isLoading
         ? List.generate(
@@ -47,6 +53,7 @@ class TransactionScreen extends ConsumerWidget {
                   : t.TransactionType.expense,
               sourceType: t.SourceType.app,
               description: 'Loading Transaction...',
+              walletId: 'dummy_wallet_id',
             ),
           )
         : transactionsAsync.asData?.value ?? [];
@@ -62,7 +69,22 @@ class TransactionScreen extends ConsumerWidget {
           ]
         : categoriesAsync.asData?.value ?? [];
 
+    final wallets = isLoading
+        ? [
+            Wallet(
+              id: 'dummy_wallet_id',
+              userId: 'dummy',
+              name: 'Loading...',
+              initialBalance: 0,
+              type: WalletType.cash,
+              isActive: true,
+              createdAt: DateTime.now(),
+            ),
+          ]
+        : walletsAsync.asData?.value ?? [];
+
     final categoryMap = {for (var c in categories) c.id: c};
+    final walletMap = {for (var w in wallets) w.id: w};
 
     return Scaffold(
       appBar: AppBar(
@@ -94,6 +116,7 @@ class TransactionScreen extends ConsumerWidget {
                 child: _FilteredTransactionList(
                   transactions: transactions,
                   categoryMap: categoryMap,
+                  walletMap: walletMap,
                 ),
               ),
             ),
@@ -204,10 +227,12 @@ class _FilterBar extends ConsumerWidget {
 class _FilteredTransactionList extends ConsumerWidget {
   final List<t.Transaction> transactions;
   final Map<int, Category> categoryMap;
+  final Map<String, Wallet> walletMap;
 
   const _FilteredTransactionList({
     required this.transactions,
     required this.categoryMap,
+    required this.walletMap,
   });
 
   @override
@@ -247,6 +272,9 @@ class _FilteredTransactionList extends ConsumerWidget {
         Expanded(
           child: GroupedListView<t.Transaction, DateTime>(
             physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.only(
+              bottom: 80,
+            ), // Add padding to avoid FAB
             elements: filteredTransactions,
             groupBy: (trx) => DateTime(
               trx.transactionDate.year,
@@ -256,7 +284,12 @@ class _FilteredTransactionList extends ConsumerWidget {
             groupSeparatorBuilder: (DateTime date) => _ListHeader(date: date),
             itemBuilder: (context, trx) {
               final category = categoryMap[trx.categoryId];
-              return _TransactionListItem(transaction: trx, category: category);
+              final wallet = walletMap[trx.walletId];
+              return _TransactionListItem(
+                transaction: trx,
+                category: category,
+                wallet: wallet,
+              );
             },
             order: GroupedListOrder.DESC,
             useStickyGroupSeparators: true,
@@ -271,8 +304,13 @@ class _FilteredTransactionList extends ConsumerWidget {
 class _TransactionListItem extends ConsumerWidget {
   final t.Transaction transaction;
   final Category? category;
+  final Wallet? wallet;
 
-  const _TransactionListItem({required this.transaction, this.category});
+  const _TransactionListItem({
+    required this.transaction,
+    this.category,
+    this.wallet,
+  });
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -422,7 +460,27 @@ class _TransactionListItem extends ConsumerWidget {
             transaction.description ?? category?.name ?? 'T/A',
             style: const TextStyle(fontWeight: FontWeight.w500),
           ),
-          subtitle: Text(category?.name ?? 'Tanpa Kategori'),
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(category?.name ?? 'Tanpa Kategori'),
+              if (wallet != null)
+                Row(
+                  children: [
+                    Icon(
+                      _getWalletIcon(wallet!.type),
+                      size: 12,
+                      color: Colors.grey,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      wallet!.name,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                    ),
+                  ],
+                ),
+            ],
+          ),
           trailing: Text(
             '${isIncome ? '+' : '-'} ${currencyFormatter.format(transaction.amount)}',
             style: TextStyle(
@@ -433,6 +491,21 @@ class _TransactionListItem extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  IconData _getWalletIcon(WalletType type) {
+    switch (type) {
+      case WalletType.bank:
+        return Icons.account_balance_rounded;
+      case WalletType.cash:
+        return Icons.payments_rounded;
+      case WalletType.eWallet:
+        return Icons.account_balance_wallet_rounded;
+      case WalletType.investment:
+        return Icons.trending_up_rounded;
+      case WalletType.other:
+        return Icons.category_rounded;
+    }
   }
 }
 

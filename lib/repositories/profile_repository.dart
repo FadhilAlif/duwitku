@@ -24,6 +24,7 @@ class ProfileRepository {
       final updateData = {
         'display_name': profile.displayName,
         'phone_number': profile.phoneNumber,
+        'default_wallet_id': profile.defaultWalletId,
         'updated_at': DateTime.now().toIso8601String(),
       };
 

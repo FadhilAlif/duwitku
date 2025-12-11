@@ -1,7 +1,10 @@
 import 'package:duwitku/models/category.dart';
 import 'package:duwitku/models/transaction.dart' as t;
+import 'package:duwitku/models/wallet.dart';
 import 'package:duwitku/providers/category_provider.dart';
+import 'package:duwitku/providers/profile_provider.dart';
 import 'package:duwitku/providers/transaction_provider.dart';
+import 'package:duwitku/providers/wallet_provider.dart';
 import 'package:duwitku/utils/icon_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_multi_formatter/flutter_multi_formatter.dart';
@@ -24,9 +27,12 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   late TextEditingController _amountController;
   late TextEditingController _descriptionController;
   DateTime _selectedDate = DateTime.now();
+  TimeOfDay _selectedTime = TimeOfDay.now();
   Category? _selectedCategory;
+  String? _selectedWalletId;
   t.TransactionType _transactionType = t.TransactionType.expense;
   bool _showAllCategories = false;
+  bool _isInitialized = false;
 
   @override
   void initState() {
@@ -41,7 +47,63 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
     if (widget.transaction != null) {
       final trx = widget.transaction!;
       _selectedDate = trx.transactionDate;
+      _selectedTime = TimeOfDay.fromDateTime(trx.transactionDate);
       _transactionType = trx.type;
+    }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_isInitialized) {
+      final walletsAsync = ref.read(walletsStreamProvider);
+      final profileAsync = ref.read(profileStreamProvider);
+
+      walletsAsync.whenData((wallets) {
+        if (wallets.isNotEmpty && !_isInitialized) {
+          String? targetWalletId;
+
+          if (widget.transaction != null) {
+            // Editing existing transaction - use its wallet
+            final walletExists = wallets.any(
+              (w) => w.id == widget.transaction!.walletId,
+            );
+            if (walletExists) {
+              targetWalletId = widget.transaction!.walletId;
+            } else {
+              // Wallet not found, fallback to default or first
+              profileAsync.whenData((profile) {
+                if (profile.defaultWalletId != null &&
+                    wallets.any((w) => w.id == profile.defaultWalletId)) {
+                  targetWalletId = profile.defaultWalletId;
+                } else {
+                  targetWalletId = wallets.first.id;
+                }
+              });
+              targetWalletId ??= wallets.first.id;
+            }
+          } else {
+            // New transaction - use default wallet
+            profileAsync.whenData((profile) {
+              if (profile.defaultWalletId != null &&
+                  wallets.any((w) => w.id == profile.defaultWalletId)) {
+                targetWalletId = profile.defaultWalletId;
+              } else {
+                targetWalletId = wallets.first.id;
+              }
+            });
+            targetWalletId ??= wallets.first.id;
+          }
+
+          if (targetWalletId != null && mounted) {
+            setState(() {
+              _selectedWalletId = targetWalletId;
+              _isInitialized = true;
+            });
+          }
+        }
+      });
     }
   }
 
@@ -60,6 +122,12 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
       ).showSnackBar(const SnackBar(content: Text('Silakan pilih kategori')));
       return;
     }
+    if (_selectedWalletId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Silakan pilih dompet')));
+      return;
+    }
 
     final amount =
         double.tryParse(_amountController.text.replaceAll('.', '')) ?? 0.0;
@@ -68,28 +136,48 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
 
     try {
       if (widget.transaction == null) {
+        // Combine selected date with selected time
+        final transactionDateTime = DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          _selectedTime.hour,
+          _selectedTime.minute,
+        );
+
         final newTransaction = t.Transaction(
           id: const Uuid().v4(),
           userId: '',
           categoryId: _selectedCategory!.id,
           amount: amount,
-          transactionDate: _selectedDate,
+          transactionDate: transactionDateTime,
           type: _transactionType,
           description: description.isNotEmpty ? description : null,
           sourceType: t.SourceType.app,
+          walletId: _selectedWalletId!,
         );
         await repo.addTransaction(newTransaction);
       } else {
+        // Use selected date and time for update
+        final transactionDateTime = DateTime(
+          _selectedDate.year,
+          _selectedDate.month,
+          _selectedDate.day,
+          _selectedTime.hour,
+          _selectedTime.minute,
+        );
+
         final updatedTransaction = t.Transaction(
           id: widget.transaction!.id,
           userId: widget.transaction!.userId,
           categoryId: _selectedCategory!.id,
           amount: amount,
-          transactionDate: _selectedDate,
+          transactionDate: transactionDateTime,
           type: _transactionType,
           description: description.isNotEmpty ? description : null,
           sourceType: widget.transaction!.sourceType,
           receiptImageUrl: widget.transaction!.receiptImageUrl,
+          walletId: _selectedWalletId!,
         );
         await repo.updateTransaction(updatedTransaction);
       }
@@ -108,6 +196,7 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
   Widget build(BuildContext context) {
     final isExpense = _transactionType == t.TransactionType.expense;
     final themeColor = isExpense ? Colors.red : Colors.green;
+    final walletsAsync = ref.watch(walletsStreamProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -136,6 +225,57 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Wallet Selector
+                    if (walletsAsync.asData?.value.isNotEmpty ?? false) ...[
+                      Text(
+                        'Dompet',
+                        style: Theme.of(context).textTheme.titleMedium,
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<String>(
+                            value:
+                                _isInitialized &&
+                                    _selectedWalletId != null &&
+                                    walletsAsync.asData!.value.any(
+                                      (w) => w.id == _selectedWalletId,
+                                    )
+                                ? _selectedWalletId
+                                : null,
+                            isExpanded: true,
+                            hint: const Text('Pilih Dompet'),
+                            items: walletsAsync.asData!.value.map((wallet) {
+                              return DropdownMenuItem(
+                                value: wallet.id,
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      _getWalletIcon(wallet.type),
+                                      size: 20,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(wallet.name),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: (walletId) {
+                              if (walletId != null) {
+                                setState(() => _selectedWalletId = walletId);
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
                     Text(
                       'Kategori',
                       style: Theme.of(context).textTheme.titleMedium,
@@ -154,9 +294,12 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
                     const SizedBox(height: 24),
                     _DetailsCard(
                       selectedDate: _selectedDate,
+                      selectedTime: _selectedTime,
                       descriptionController: _descriptionController,
                       onDateChanged: (date) =>
                           setState(() => _selectedDate = date),
+                      onTimeChanged: (time) =>
+                          setState(() => _selectedTime = time),
                     ),
                   ],
                 ),
@@ -182,6 +325,21 @@ class _TransactionFormScreenState extends ConsumerState<TransactionFormScreen> {
         ),
       ),
     );
+  }
+
+  IconData _getWalletIcon(WalletType type) {
+    switch (type) {
+      case WalletType.bank:
+        return Icons.account_balance_rounded;
+      case WalletType.cash:
+        return Icons.payments_rounded;
+      case WalletType.eWallet:
+        return Icons.account_balance_wallet_rounded;
+      case WalletType.investment:
+        return Icons.trending_up_rounded;
+      case WalletType.other:
+        return Icons.category_rounded;
+    }
   }
 }
 
@@ -306,17 +464,19 @@ class _CategoryGrid extends ConsumerWidget {
             .where((c) => c.type.name == transactionType.name)
             .toList();
 
+        // Initialize category for edit transaction only once
         if (initialTransaction != null && selectedCategory == null) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            try {
-              final initialCategory = categories.firstWhere(
-                (c) => c.id == initialTransaction!.categoryId,
-              );
+          try {
+            final initialCategory = categories.firstWhere(
+              (c) => c.id == initialTransaction!.categoryId,
+            );
+            // Set immediately instead of using callback to prevent flicker
+            WidgetsBinding.instance.addPostFrameCallback((_) {
               onCategorySelected(initialCategory);
-            } catch (e) {
-              // ignore
-            }
-          });
+            });
+          } catch (e) {
+            // Category not found, ignore
+          }
         }
 
         final itemsToShow = showAll
@@ -351,13 +511,17 @@ class _CategoryGrid extends ConsumerWidget {
 
 class _DetailsCard extends StatelessWidget {
   final DateTime selectedDate;
+  final TimeOfDay selectedTime;
   final TextEditingController descriptionController;
   final ValueChanged<DateTime> onDateChanged;
+  final ValueChanged<TimeOfDay> onTimeChanged;
 
   const _DetailsCard({
     required this.selectedDate,
+    required this.selectedTime,
     required this.descriptionController,
     required this.onDateChanged,
+    required this.onTimeChanged,
   });
 
   String _formatDate(DateTime date) {
@@ -380,6 +544,22 @@ class _DetailsCard extends StatelessWidget {
     }
   }
 
+  Future<void> _selectTime(BuildContext context) async {
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: selectedTime,
+      builder: (context, child) {
+        return MediaQuery(
+          data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: true),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null && picked != selectedTime) {
+      onTimeChanged(picked);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Card(
@@ -397,6 +577,18 @@ class _DetailsCard extends StatelessWidget {
               avatar: const Icon(Icons.keyboard_arrow_down),
               label: Text(_formatDate(selectedDate)),
               onPressed: () => _selectDate(context),
+            ),
+          ),
+          const Divider(height: 1, indent: 16, endIndent: 16),
+          ListTile(
+            leading: const Icon(Icons.access_time),
+            title: const Text('Waktu', style: TextStyle(fontSize: 15)),
+            trailing: ActionChip(
+              avatar: const Icon(Icons.keyboard_arrow_down),
+              label: Text(
+                '${selectedTime.hour.toString().padLeft(2, '0')}:${selectedTime.minute.toString().padLeft(2, '0')}',
+              ),
+              onPressed: () => _selectTime(context),
             ),
           ),
           const Divider(height: 1, indent: 16, endIndent: 16),

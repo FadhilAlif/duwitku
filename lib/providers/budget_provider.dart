@@ -1,5 +1,7 @@
 import 'package:duwitku/models/budget.dart';
+import 'package:duwitku/models/transaction.dart';
 import 'package:duwitku/repositories/budget_repository.dart';
+import 'package:duwitku/repositories/transaction_repository.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 // Provider for the BudgetRepository
@@ -37,3 +39,25 @@ final budgetsStreamProvider = StreamProvider.autoDispose<List<Budget>>((ref) {
   final selectedMonth = ref.watch(budgetMonthProvider);
   return budgetRepository.streamBudgets(selectedMonth);
 });
+
+// StreamProvider for transactions based on the selected budget month
+final budgetTransactionsStreamProvider =
+    StreamProvider.autoDispose<List<Transaction>>((ref) {
+      final transactionRepository = TransactionRepository();
+      final selectedMonth = ref.watch(budgetMonthProvider);
+
+      final startDate = DateTime(selectedMonth.year, selectedMonth.month, 1);
+      final endDate = DateTime(
+        selectedMonth.year,
+        selectedMonth.month + 1,
+        0,
+        23,
+        59,
+        59,
+      );
+
+      return transactionRepository.getTransactionsStream(
+        startDate: startDate,
+        endDate: endDate,
+      );
+    });

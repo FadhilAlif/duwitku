@@ -1,3 +1,6 @@
+import 'package:duwitku/views/voice_input/voice_input_review_screen.dart';
+import 'package:duwitku/views/scan_struk/receipt_review_screen.dart';
+import 'package:duwitku/models/receipt_item.dart';
 import 'package:duwitku/utils/go_router_refresh_stream.dart';
 import 'package:duwitku/views/manage_categories/manage_categories_screen.dart';
 import 'package:duwitku/views/chat_prompt/chat_prompt_screen.dart';
@@ -7,10 +10,16 @@ import 'package:duwitku/views/main_navigation/main_navigation_screen.dart';
 import 'package:duwitku/views/register/register_screen.dart';
 import 'package:duwitku/views/scan_struk/scan_struk_screen.dart';
 import 'package:duwitku/views/splash/splash_screen.dart';
+import 'package:duwitku/views/input_phone/input_phone_screen.dart';
 import 'package:duwitku/views/transaction_form/transaction_form_screen.dart';
+import 'package:duwitku/views/voice_input/voice_input_screen.dart';
+import 'package:duwitku/views/wallet/add_edit_wallet_screen.dart';
+import 'package:duwitku/views/wallet/wallet_detail_screen.dart';
+import 'package:duwitku/views/analytics/analytics_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:duwitku/models/transaction.dart' as t;
+import 'package:duwitku/models/wallet.dart';
 
 final router = GoRouter(
   refreshListenable: GoRouterRefreshStream(
@@ -36,6 +45,26 @@ final router = GoRouter(
       builder: (context, state) => const ScanStrukScreen(),
     ),
     GoRoute(
+      path: '/receipt_review',
+      builder: (context, state) {
+        final args = state.extra as Map<String, dynamic>;
+        final items = args['items'] as List<ReceiptItem>;
+        final imageUrl = args['imageUrl'] as String?;
+        return ReceiptReviewScreen(items: items, imageUrl: imageUrl);
+      },
+    ),
+    GoRoute(
+      path: '/voice_input_review',
+      builder: (context, state) {
+        final items = state.extra as List<ReceiptItem>;
+        return VoiceInputReviewScreen(items: items);
+      },
+    ),
+    GoRoute(
+      path: '/voice_input',
+      builder: (context, state) => const VoiceInputScreen(),
+    ),
+    GoRoute(
       path: '/chat_prompt',
       builder: (context, state) => const ChatPromptScreen(),
     ),
@@ -49,6 +78,28 @@ final router = GoRouter(
     GoRoute(
       path: '/edit_profile',
       builder: (context, state) => const EditProfileScreen(),
+    ),
+    GoRoute(
+      path: '/input_phone',
+      builder: (context, state) => const InputPhoneScreen(),
+    ),
+    GoRoute(
+      path: '/add_edit_wallet',
+      builder: (context, state) {
+        final wallet = state.extra as Wallet?;
+        return AddEditWalletScreen(wallet: wallet);
+      },
+    ),
+    GoRoute(
+      path: '/wallet_detail',
+      builder: (context, state) {
+        final wallet = state.extra as Wallet;
+        return WalletDetailScreen(wallet: wallet);
+      },
+    ),
+    GoRoute(
+      path: '/analytics',
+      builder: (context, state) => const AnalyticsScreen(),
     ),
   ],
   redirect: (context, state) {
@@ -66,8 +117,8 @@ final router = GoRouter(
       return '/login';
     }
 
-    if (isAuth && (isLoggingIn || isSplashing)) {
-      return '/main';
+    if (isAuth && isLoggingIn) {
+      return '/';
     }
 
     return null;

@@ -1,4 +1,4 @@
-import 'package:duwitku/views/budget/budget_screen.dart';
+import 'package:duwitku/views/finance_hub/finance_hub_screen.dart';
 import 'package:duwitku/views/home/home_screen.dart';
 import 'package:duwitku/views/profile/profile_screen.dart';
 import 'package:duwitku/views/transaction/transaction_screen.dart';
@@ -18,10 +18,10 @@ class MainNavigationScreen extends ConsumerStatefulWidget {
 
 class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
   static final List<Widget> _widgetOptions = <Widget>[
-    HomeScreen(),
-    TransactionScreen(),
-    BudgetScreen(),
-    ProfileScreen(),
+    const HomeScreen(),
+    const TransactionScreen(),
+    const FinanceHubScreen(),
+    const ProfileScreen(),
   ];
 
   void _showAddTransactionModal(BuildContext context) {
@@ -58,13 +58,21 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.chat_bubble_outline),
-              title: const Text('Chat Prompt'),
+              leading: const Icon(Icons.keyboard_voice),
+              title: const Text('Input Suara'),
               onTap: () {
                 Navigator.pop(context);
-                context.push('/chat_prompt');
+                context.push('/voice_input');
               },
             ),
+            // ListTile(
+            //   leading: const Icon(Icons.chat_bubble_outline),
+            //   title: const Text('Chat Prompt'),
+            //   onTap: () {
+            //     Navigator.pop(context);
+            //     context.push('/chat_prompt');
+            //   },
+            // ),
             const SizedBox(height: 24),
           ],
         );
@@ -97,24 +105,21 @@ class _MainNavigationScreenState extends ConsumerState<MainNavigationScreen> {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 15.0,
-              vertical: 8.0,
-            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
             child: GNav(
               rippleColor: Colors.grey[300]!,
               hoverColor: Colors.grey[100]!,
-              gap: 8,
+              gap: 4,
               activeColor: Colors.white,
-              iconSize: 24,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+              iconSize: 22,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
               duration: const Duration(milliseconds: 400),
               tabBackgroundColor: const Color(0xFF14894e),
               color: Colors.black,
               tabs: const [
                 GButton(icon: Icons.home, text: 'Beranda'),
                 GButton(icon: Icons.receipt_long, text: 'Transaksi'),
-                GButton(icon: Icons.account_balance_wallet, text: 'Anggaran'),
+                GButton(icon: Icons.bar_chart_sharp, text: 'Keuangan'),
                 GButton(icon: Icons.person, text: 'Profil'),
               ],
               selectedIndex: selectedIndex,
