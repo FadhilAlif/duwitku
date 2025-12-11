@@ -134,7 +134,8 @@ class _VoiceInputScreenState extends ConsumerState<VoiceInputScreen> {
           );
 
       if (mounted) {
-        context.pushReplacement('/voice_input_review', extra: items);
+        // Use push instead of pushReplacement to prevent provider disposal
+        context.push('/voice_input_review', extra: items);
       }
     } catch (e) {
       if (mounted) {
