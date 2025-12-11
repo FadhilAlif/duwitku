@@ -12,7 +12,7 @@ Duwitku is a comprehensive personal finance management application built with **
 - **💰 Budget Planning**: Set monthly budgets for different categories with progress tracking and days remaining indicators.
 - **📈 Visual Analytics**: Comprehensive analytics dashboard with interactive charts using `fl_chart`. View spending patterns, category breakdowns, and month-over-month comparisons.
 - **🏦 Finance Hub**: Centralized hub with tab navigation for analytics, budgets, and wallet management - all in one place.
-- **🤖 AI Assistant**: Integrated Chat Prompt feature powered by Google Gemini AI to assist with financial queries and transaction categorization.
+- **🤖 AI Assistant**: Integrated Chat Prompt feature powered by Google Gemini AI to assist with financial queries, transaction categorization, and wallet categorization.
 - **☁️ Cloud Sync**: Real-time data synchronization and secure storage using **Supabase** with Row Level Security.
 - **🔐 Secure Authentication**: Support for Email/Password login and Google Sign-In with phone number verification.
 - **📤 Data Export**: Export your financial reports to **CSV** and **PDF** formats using SharePlus for external analysis.
@@ -49,7 +49,7 @@ Duwitku implements a multi-platform ecosystem with seamless integration between 
 │  📱 Flutter MobileApp        │  💬 WhatsApp Bot (duwitku-bot) │
 │  - iOS & Android              │  - WAHA API Integration         │
 │  - Receipt Scanning           │  - Natural Language Input       │
-│                               │  - AI Auto-Categorization       │
+│  - Voice Input                │  - AI Auto-Categorization       │
 └────────────┬──────────────────┴────────────────┬────────────────┘
              │                                   │
              │         ┌─────────────────────────┘
@@ -71,7 +71,8 @@ Duwitku implements a multi-platform ecosystem with seamless integration between 
     ├────────────────────────────────────┤
     │  🤖 Google Gemini AI               │
     │     - Receipt OCR & Analysis       │
-    │     - Transaction Categorization   │
+    │     - Transaction Categorization   |
+    |     - Wallet Categorization        │
     │  🔑 Google OAuth                   │
     │     - Social Sign-In               │
     └────────────────────────────────────┘
@@ -253,7 +254,7 @@ A complementary service that enables transaction logging via WhatsApp messaging:
 **Key Features:**
 
 - 📝 **Natural Language Processing**: Log expenses by simply chatting
-- 🤖 **AI Auto-Categorization**: Gemini AI automatically categorizes transactions
+- 🤖 **AI Auto-Categorization**: Gemini AI automatically categorizes transactions and wallet
 - 💬 **Conversational Interface**: No need to remember specific formats
 - 🔄 **Real-time Sync**: Instantly syncs with your Duwitku mobile app
 - 📊 **Batch Entry**: Record multiple transactions in one WhatsApp Message
