@@ -54,6 +54,7 @@ class ManageCategoriesScreen extends ConsumerWidget {
 
     try {
       await ref.read(categoryRepositoryProvider).deleteCategory(category.id);
+      ref.invalidate(categoriesStreamProvider);
       messenger.showSnackBar(
         const SnackBar(
           content: Text('Kategori berhasil dihapus'),
