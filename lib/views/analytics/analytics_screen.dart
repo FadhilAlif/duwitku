@@ -795,7 +795,17 @@ class _IncomeExpenseLineChart extends StatelessWidget {
 
     return LineChart(
       LineChartData(
-        gridData: const FlGridData(show: true, drawVerticalLine: false),
+        gridData: FlGridData(
+          show: true,
+          drawVerticalLine: false,
+          getDrawingHorizontalLine: (value) {
+            return FlLine(
+              color: Colors.grey.withAlpha(50),
+              strokeWidth: 1,
+              dashArray: [5, 5],
+            );
+          },
+        ),
         titlesData: FlTitlesData(
           bottomTitles: AxisTitles(
             sideTitles: SideTitles(
@@ -806,23 +816,41 @@ class _IncomeExpenseLineChart extends StatelessWidget {
                 // Only show integers
                 if (value % 1 != 0) return const SizedBox.shrink();
                 final val = value.toInt();
+                bool showLabel = false;
 
                 if (filter == AnalyticsFilter.daily) {
-                  // Show labels every 5 days to avoid crowding
-                  if (val % 5 == 0 || val == 1) {
-                    return Padding(
-                      padding: const EdgeInsets.only(top: 8.0),
-                      child: Text('$val', style: const TextStyle(fontSize: 10)),
-                    );
+                  // Show first(1), last(maxX), and every 5th day
+                  if (val == 1 || val == maxX.toInt() || val % 5 == 0) {
+                    showLabel = true;
                   }
-                  return const SizedBox.shrink();
                 } else {
-                  // Weekly
-                  return Padding(
-                    padding: const EdgeInsets.only(top: 8.0),
-                    child: Text('W$val', style: const TextStyle(fontSize: 10)),
-                  );
+                  // Weekly - show all weeks
+                  showLabel = true;
                 }
+
+                if (!showLabel) return const SizedBox.shrink();
+
+                final text = filter == AnalyticsFilter.daily ? '$val' : 'W$val';
+
+                // Avoid overlapping labels near the end
+                // If val is close to maxX but not equal, skip to prioritize maxX
+                if (filter == AnalyticsFilter.daily &&
+                    val != maxX.toInt() &&
+                    (maxX - val) < 2) {
+                  return const SizedBox.shrink();
+                }
+
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8.0),
+                  child: Text(
+                    text,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                );
               },
             ),
           ),
@@ -854,16 +882,22 @@ class _IncomeExpenseLineChart extends StatelessWidget {
                 )
                 .toList(),
             isCurved: true,
-            curveSmoothness: 0.4,
+            curveSmoothness: 0.35,
+            preventCurveOverShooting: true,
             color: const Color(0xFF4CAF50),
             barWidth: 3,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
+            shadow: const Shadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, 4),
+            ),
             belowBarData: BarAreaData(
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFF4CAF50).withAlpha(100),
+                  const Color(0xFF4CAF50).withAlpha(80),
                   const Color(0xFF4CAF50).withAlpha(0),
                 ],
                 begin: Alignment.topCenter,
@@ -883,16 +917,22 @@ class _IncomeExpenseLineChart extends StatelessWidget {
                 )
                 .toList(),
             isCurved: true,
-            curveSmoothness: 0.4,
+            curveSmoothness: 0.35,
+            preventCurveOverShooting: true,
             color: const Color(0xFFEF5350),
             barWidth: 3,
             isStrokeCapRound: true,
             dotData: const FlDotData(show: false),
+            shadow: const Shadow(
+              color: Colors.black12,
+              blurRadius: 4,
+              offset: Offset(0, 4),
+            ),
             belowBarData: BarAreaData(
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  const Color(0xFFEF5350).withAlpha(100),
+                  const Color(0xFFEF5350).withAlpha(80),
                   const Color(0xFFEF5350).withAlpha(0),
                 ],
                 begin: Alignment.topCenter,
