@@ -2,6 +2,27 @@
 
 Duwitku is a comprehensive personal finance management application built with **Flutter**. It is designed to help users effortlessly track expenses, manage budgets, and gain valuable insights into their financial habits through a modern and intuitive interface.
 
+## 📱 Screenshots
+
+<div align="center">
+  <img src="assets/screenshots/dashboard.jpg" width="200" alt="Dashboard">
+  <img src="assets/screenshots/smart-overview.jpg" width="200" alt="Smart Overview">
+  <img src="assets/screenshots/transaction.jpg" width="200" alt="Transactions">
+  <img src="assets/screenshots/multi-wallet.jpg" width="200" alt="Multi-Wallet">
+</div>
+
+<div align="center">
+  <img src="assets/screenshots/category.jpg" width="200" alt="Categories">
+  <img src="assets/screenshots/budget.jpg" width="200" alt="Budget Planning">
+  <img src="assets/screenshots/chart.jpg" width="200" alt="Analytics Charts">
+  <img src="assets/screenshots/filter.jpg" width="200" alt="Transaction Filter">
+</div>
+
+<div align="center">
+  <img src="assets/screenshots/profile.jpg" width="200" alt="User Profile">
+  <img src="assets/screenshots/export.jpg" width="200" alt="Export Data">
+</div>
+
 ## ✨ Key Features
 
 - **📊 Smart Dashboard**: Get a quick overview of your total assets, recent transactions, and budget status with smooth loading animations (Skeletonizer).
@@ -309,6 +330,8 @@ Bot: ✅ Income recorded: Rp 5,000,000
 
 - [Flutter SDK](https://docs.flutter.dev/get-started/install) (Version 3.9.2 or higher)
 - Supabase Project (for backend)
+- Google Cloud Console account (for OAuth)
+- Google AI Studio account (for Gemini API)
 
 ### Installation
 
@@ -348,11 +371,50 @@ Bot: ✅ Income recorded: Rp 5,000,000
    - **Google Client ID**: [Google Cloud Console](https://console.cloud.google.com) → APIs & Services → Credentials
    - **Gemini API**: [Google AI Studio](https://makersuite.google.com/app/apikey)
 
-4. **Run the App**
+4. **Database Setup**
+
+   Run the SQL migrations in your Supabase project to create the required tables and enable Row Level Security (RLS) policies.
+
+5. **Run the App**
 
    ```bash
    flutter run
    ```
+
+## 📦 Build & Deployment
+
+### Android
+
+```bash
+flutter build apk --release
+# or
+flutter build appbundle --release
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 👨‍💻 Author
+
+**Fadhil Alif**
+
+- GitHub: [@FadhilAlif](https://github.com/FadhilAlif)
+- LinkedIn: [Fadhil Alif](https://www.linkedin.com/in/fadhilalif/)
+
+## 🙏 Acknowledgments
+
+- [Flutter Team](https://flutter.dev) for the amazing framework
+- [Supabase](https://supabase.com) for the powerful backend platform
+- [Google AI](https://ai.google.dev/) for Gemini AI capabilities
+- All open-source contributors whose packages made this project possible
+
+## 📞 Support
+
+If you encounter any issues or have questions:
+
+- 🐛 [Report a Bug](https://github.com/FadhilAlif/duwitku/issues)
+- 💡 [Request a Feature](https://github.com/FadhilAlif/duwitku/issues)
 
 ## 🤝 Contributing
 

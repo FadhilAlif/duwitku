@@ -1,5 +1,6 @@
 import 'package:duwitku/models/receipt_item.dart';
 import 'package:duwitku/models/transaction.dart';
+import 'package:duwitku/models/user_profile.dart';
 import 'package:duwitku/models/wallet.dart';
 import 'package:duwitku/providers/category_provider.dart';
 import 'package:duwitku/providers/profile_provider.dart';
@@ -35,33 +36,70 @@ class _VoiceInputReviewScreenState
   void initState() {
     super.initState();
     _items = List.from(widget.items);
-    _initializeWallet();
+    // Initialize wallet selection after first frame to ensure providers are ready
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) {
+        _initializeWallet();
+      }
+    });
   }
 
   Future<void> _initializeWallet() async {
-    final wallets = await ref.read(walletsStreamProvider.future);
-    final profile = await ref.read(profileStreamProvider.future);
+    try {
+      // Use read instead of future to get current state without waiting
+      final walletsState = ref.read(walletsStreamProvider);
+      final profileState = ref.read(profileStreamProvider);
 
-    if (wallets.isNotEmpty) {
-      if (mounted) {
-        setState(() {
-          // Try to use wallet ID from the first item if available (AI detected)
-          if (_items.isNotEmpty &&
-              _items.first.walletId != null &&
-              wallets.any((w) => w.id == _items.first.walletId)) {
-            _selectedWalletId = _items.first.walletId;
-          }
-          // Fallback to default wallet from profile
-          else if (profile.defaultWalletId != null &&
-              wallets.any((w) => w.id == profile.defaultWalletId)) {
-            _selectedWalletId = profile.defaultWalletId;
-          }
-          // Last resort: first available wallet
-          else {
-            _selectedWalletId = wallets.first.id;
-          }
-        });
+      // Handle different async states
+      List<Wallet> wallets = [];
+      UserProfile? profile;
+
+      walletsState.whenData((data) => wallets = data);
+      profileState.whenData((data) => profile = data);
+
+      // If data is not loaded yet, wait for it
+      if (wallets.isEmpty) {
+        try {
+          wallets = await ref.read(walletsStreamProvider.future);
+        } catch (e) {
+          debugPrint('Error loading wallets: $e');
+          wallets = [];
+        }
       }
+
+      if (profile == null) {
+        try {
+          profile = await ref.read(profileStreamProvider.future);
+        } catch (e) {
+          debugPrint('Error loading profile: $e');
+          // Continue without profile, wallet selection will use first wallet
+        }
+      }
+
+      if (wallets.isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            // Try to use wallet ID from the first item if available (AI detected)
+            if (_items.isNotEmpty &&
+                _items.first.walletId != null &&
+                wallets.any((w) => w.id == _items.first.walletId)) {
+              _selectedWalletId = _items.first.walletId;
+            }
+            // Fallback to default wallet from profile
+            else if (profile?.defaultWalletId != null &&
+                wallets.any((w) => w.id == profile!.defaultWalletId)) {
+              _selectedWalletId = profile!.defaultWalletId;
+            }
+            // Last resort: first available wallet
+            else {
+              _selectedWalletId = wallets.first.id;
+            }
+          });
+        }
+      }
+    } catch (e) {
+      // Silently fail during initialization, user can still select wallet manually
+      debugPrint('Warning: Failed to initialize wallet: $e');
     }
   }
 
