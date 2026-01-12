@@ -285,13 +285,13 @@ A complementary service that enables transaction logging via WhatsApp messaging:
 ```text
 User:
 Expenses
-Mie ayam 15000
-bensin 50k
-kopi 12k
+Mie ayam 15000 Cash
+bensin 50k Cash
+kopi 12k Cash
 Bot: ✅ 3 transactions recorded and categorized!
 
 Income
-User: "duwitku Gajian 5000000"
+User: "duwitku Gajian 5000000 Mandiri"
 Bot: ✅ Income recorded: Rp 5,000,000
 ```
 
@@ -397,17 +397,8 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 👨‍💻 Author
 
-**Fadhil Alif**
-
 - GitHub: [@FadhilAlif](https://github.com/FadhilAlif)
 - LinkedIn: [Fadhil Alif](https://www.linkedin.com/in/fadhilalif/)
-
-## 🙏 Acknowledgments
-
-- [Flutter Team](https://flutter.dev) for the amazing framework
-- [Supabase](https://supabase.com) for the powerful backend platform
-- [Google AI](https://ai.google.dev/) for Gemini AI capabilities
-- All open-source contributors whose packages made this project possible
 
 ## 📞 Support
 
