@@ -108,6 +108,37 @@ class WalletScreen extends ConsumerWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      const SizedBox(height: 16),
+                      // Transfer Button
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: wallets.length >= 2
+                              ? () => context.push('/transfer')
+                              : null,
+                          icon: const Icon(
+                            Icons.swap_horiz_rounded,
+                            color: Colors.white,
+                          ),
+                          label: const Text(
+                            'Transfer Antar Dompet',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            side: BorderSide(
+                              color: Colors.white.withAlpha(100),
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            disabledForegroundColor: Colors.white.withAlpha(80),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),

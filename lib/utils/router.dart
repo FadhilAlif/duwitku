@@ -14,6 +14,7 @@ import 'package:duwitku/views/input_phone/input_phone_screen.dart';
 import 'package:duwitku/views/transaction_form/transaction_form_screen.dart';
 import 'package:duwitku/views/voice_input/voice_input_screen.dart';
 import 'package:duwitku/views/wallet/add_edit_wallet_screen.dart';
+import 'package:duwitku/views/wallet/transfer_screen.dart';
 import 'package:duwitku/views/wallet/wallet_detail_screen.dart';
 import 'package:duwitku/views/analytics/analytics_screen.dart';
 import 'package:go_router/go_router.dart';
@@ -95,6 +96,13 @@ final router = GoRouter(
       builder: (context, state) {
         final wallet = state.extra as Wallet;
         return WalletDetailScreen(wallet: wallet);
+      },
+    ),
+    GoRoute(
+      path: '/transfer',
+      builder: (context, state) {
+        final wallet = state.extra as Wallet?;
+        return TransferScreen(sourceWallet: wallet);
       },
     ),
     GoRoute(
