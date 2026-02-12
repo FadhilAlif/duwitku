@@ -14,8 +14,11 @@ import 'package:duwitku/views/input_phone/input_phone_screen.dart';
 import 'package:duwitku/views/transaction_form/transaction_form_screen.dart';
 import 'package:duwitku/views/voice_input/voice_input_screen.dart';
 import 'package:duwitku/views/wallet/add_edit_wallet_screen.dart';
+import 'package:duwitku/views/wallet/add_edit_wallet_group_screen.dart';
 import 'package:duwitku/views/wallet/transfer_screen.dart';
 import 'package:duwitku/views/wallet/wallet_detail_screen.dart';
+import 'package:duwitku/views/wallet/wallet_group_screen.dart';
+import 'package:duwitku/models/wallet_group.dart';
 import 'package:duwitku/views/analytics/analytics_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -103,6 +106,17 @@ final router = GoRouter(
       builder: (context, state) {
         final wallet = state.extra as Wallet?;
         return TransferScreen(sourceWallet: wallet);
+      },
+    ),
+    GoRoute(
+      path: '/wallet_groups',
+      builder: (context, state) => const WalletGroupScreen(),
+    ),
+    GoRoute(
+      path: '/add_edit_wallet_group',
+      builder: (context, state) {
+        final group = state.extra as WalletGroup?;
+        return AddEditWalletGroupScreen(group: group);
       },
     ),
     GoRoute(
