@@ -528,7 +528,7 @@ class _AnalyticsContent extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.show_chart, size: 20, color: Color(0xFF14894e)),
+            const Icon(Icons.bar_chart, size: 20, color: Color(0xFF14894e)),
             const SizedBox(width: 8),
             const Text(
               'Tren Pemasukan & Pengeluaran',
@@ -556,7 +556,7 @@ class _AnalyticsContent extends StatelessWidget {
             padding: const EdgeInsets.all(16.0),
             child: SizedBox(
               height: 250,
-              child: _IncomeExpenseLineChart(
+              child: _IncomeExpenseBarChart(
                 transactions: transactions,
                 filter: filter,
                 selectedMonth: selectedMonth,
@@ -568,6 +568,21 @@ class _AnalyticsContent extends StatelessWidget {
         _TotalSpendingCard(
           totalIncome: totalIncome,
           totalExpense: totalExpense,
+        ),
+        const SizedBox(height: 16),
+        _DailyAverageCard(
+          transactions: transactions,
+          selectedMonth: selectedMonth,
+        ),
+        const SizedBox(height: 16),
+        _MonthComparisonCard(
+          currentTransactions: transactions,
+          selectedMonth: selectedMonth,
+        ),
+        const SizedBox(height: 16),
+        _ExpenseFreeDaysCard(
+          transactions: transactions,
+          selectedMonth: selectedMonth,
         ),
         const SizedBox(height: 24),
         Row(
@@ -750,12 +765,12 @@ class _TotalSpendingCard extends StatelessWidget {
   }
 }
 
-class _IncomeExpenseLineChart extends StatelessWidget {
+class _IncomeExpenseBarChart extends StatelessWidget {
   final List<Transaction> transactions;
   final AnalyticsFilter filter;
   final DateTime selectedMonth;
 
-  const _IncomeExpenseLineChart({
+  const _IncomeExpenseBarChart({
     required this.transactions,
     required this.filter,
     required this.selectedMonth,
@@ -775,26 +790,67 @@ class _IncomeExpenseLineChart extends StatelessWidget {
             .reduce((a, b) => a > b ? a : b) *
         1.2;
 
-    // Determine min and max X based on filter
-    double minX = 0;
-    double maxX = 0;
-
+    // Build bar groups
+    final int totalSlots;
     if (filter == AnalyticsFilter.daily) {
-      // For daily, we want 1 to EndOfMonthDay
-      minX = 1;
-      maxX = DateTime(
-        selectedMonth.year,
-        selectedMonth.month + 1,
-        0,
-      ).day.toDouble();
+      totalSlots = DateTime(selectedMonth.year, selectedMonth.month + 1, 0).day;
     } else {
-      // For weekly, we want W1 to W5 (approx)
-      minX = 1;
-      maxX = 5;
+      totalSlots = 5;
     }
 
-    return LineChart(
-      LineChartData(
+    // Map data points by their x-index for quick lookup
+    final Map<int, _ChartDataPoint> dataMap = {};
+    for (var dp in dataPoints) {
+      final key = filter == AnalyticsFilter.daily
+          ? dp.date.day
+          : _getWeekOfMonth(dp.date);
+      dataMap[key] = dp;
+    }
+
+    final barWidth = filter == AnalyticsFilter.daily
+        ? (totalSlots <= 15 ? 6.0 : 4.0)
+        : 16.0;
+
+    final barGroups = List.generate(totalSlots, (i) {
+      final x = i + 1;
+      final dp = dataMap[x];
+      return BarChartGroupData(
+        x: x,
+        barRods: [
+          BarChartRodData(
+            toY: dp?.income ?? 0,
+            color: const Color(0xFF4CAF50),
+            width: barWidth,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(3),
+              topRight: Radius.circular(3),
+            ),
+            backDrawRodData: BackgroundBarChartRodData(show: false),
+          ),
+          BarChartRodData(
+            toY: dp?.expense ?? 0,
+            color: const Color(0xFFEF5350),
+            width: barWidth,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(3),
+              topRight: Radius.circular(3),
+            ),
+          ),
+        ],
+        barsSpace: 2,
+      );
+    });
+
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
+
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: maxY == 0 ? 100000 : maxY,
         gridData: FlGridData(
           show: true,
           drawVerticalLine: false,
@@ -811,35 +867,25 @@ class _IncomeExpenseLineChart extends StatelessWidget {
             sideTitles: SideTitles(
               showTitles: true,
               reservedSize: 30,
-              interval: 1,
               getTitlesWidget: (value, meta) {
-                // Only show integers
-                if (value % 1 != 0) return const SizedBox.shrink();
                 final val = value.toInt();
                 bool showLabel = false;
 
                 if (filter == AnalyticsFilter.daily) {
-                  // Show first(1), last(maxX), and every 5th day
-                  if (val == 1 || val == maxX.toInt() || val % 5 == 0) {
+                  if (val == 1 || val == totalSlots || val % 5 == 0) {
                     showLabel = true;
                   }
+                  // Avoid overlap near end
+                  if (val != totalSlots && (totalSlots - val) < 2) {
+                    showLabel = false;
+                  }
                 } else {
-                  // Weekly - show all weeks
                   showLabel = true;
                 }
 
                 if (!showLabel) return const SizedBox.shrink();
 
                 final text = filter == AnalyticsFilter.daily ? '$val' : 'W$val';
-
-                // Avoid overlapping labels near the end
-                // If val is close to maxX but not equal, skip to prioritize maxX
-                if (filter == AnalyticsFilter.daily &&
-                    val != maxX.toInt() &&
-                    (maxX - val) < 2) {
-                  return const SizedBox.shrink();
-                }
-
                 return Padding(
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text(
@@ -865,153 +911,59 @@ class _IncomeExpenseLineChart extends StatelessWidget {
           ),
         ),
         borderData: FlBorderData(show: false),
-        minX: minX,
-        maxX: maxX,
-        minY: 0,
-        maxY: maxY == 0 ? 100000 : maxY,
-        lineBarsData: [
-          LineChartBarData(
-            spots: dataPoints
-                .map(
-                  (e) => FlSpot(
-                    filter == AnalyticsFilter.daily
-                        ? e.date.day.toDouble()
-                        : _getWeekOfMonth(e.date).toDouble(),
-                    e.income,
-                  ),
-                )
-                .toList(),
-            isCurved: true,
-            curveSmoothness: 0.35,
-            preventCurveOverShooting: true,
-            color: const Color(0xFF4CAF50),
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: const FlDotData(show: false),
-            shadow: const Shadow(
-              color: Colors.black12,
-              blurRadius: 4,
-              offset: Offset(0, 4),
-            ),
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF4CAF50).withAlpha(80),
-                  const Color(0xFF4CAF50).withAlpha(0),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-          LineChartBarData(
-            spots: dataPoints
-                .map(
-                  (e) => FlSpot(
-                    filter == AnalyticsFilter.daily
-                        ? e.date.day.toDouble()
-                        : _getWeekOfMonth(e.date).toDouble(),
-                    e.expense,
-                  ),
-                )
-                .toList(),
-            isCurved: true,
-            curveSmoothness: 0.35,
-            preventCurveOverShooting: true,
-            color: const Color(0xFFEF5350),
-            barWidth: 3,
-            isStrokeCapRound: true,
-            dotData: const FlDotData(show: false),
-            shadow: const Shadow(
-              color: Colors.black12,
-              blurRadius: 4,
-              offset: Offset(0, 4),
-            ),
-            belowBarData: BarAreaData(
-              show: true,
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFFEF5350).withAlpha(80),
-                  const Color(0xFFEF5350).withAlpha(0),
-                ],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-          ),
-        ],
-        lineTouchData: LineTouchData(
+        barTouchData: BarTouchData(
           enabled: true,
           handleBuiltInTouches: true,
-          touchTooltipData: LineTouchTooltipData(
+          touchTooltipData: BarTouchTooltipData(
             tooltipPadding: const EdgeInsets.symmetric(
               horizontal: 12,
               vertical: 8,
             ),
-            tooltipMargin: -40,
+            tooltipMargin: 8,
             fitInsideHorizontally: true,
             fitInsideVertically: true,
-            getTooltipColor: (touchedSpot) => Colors.black87,
-            getTooltipItems: (touchedSpots) {
-              if (touchedSpots.isEmpty) return [];
+            getTooltipColor: (group) => Colors.black87,
+            getTooltipItem: (group, groupIndex, rod, rodIndex) {
+              final x = group.x;
+              final dp = dataMap[x];
+              if (dp == null) return null;
 
-              // Get the first spot to determine the index
-              final spotIndex = touchedSpots[0].spotIndex;
-              if (spotIndex >= dataPoints.length) return [];
+              String label;
+              if (filter == AnalyticsFilter.daily) {
+                label = DateFormat('d MMM', 'id_ID').format(dp.date);
+              } else {
+                label = 'Minggu $x';
+              }
 
-              final dataPoint = dataPoints[spotIndex];
-              final dateStr = DateFormat(
-                'd MMM',
-                'id_ID',
-              ).format(dataPoint.date);
-              final currencyFormatter = NumberFormat.currency(
-                locale: 'id_ID',
-                symbol: 'Rp ',
-                decimalDigits: 0,
-              );
-
-              // Return tooltip items for both lines
-              return touchedSpots.map((spot) {
-                final isIncome = spot.barIndex == 0;
-                return LineTooltipItem(
-                  isIncome
-                      ? '$dateStr\n🟢 ${currencyFormatter.format(dataPoint.income)}'
-                      : '🔴 ${currencyFormatter.format(dataPoint.expense)}',
-                  TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: isIncome ? 13 : 12,
+              // Show tooltip for both bars (income and expense)
+              return BarTooltipItem(
+                '$label\n',
+                const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+                children: [
+                  TextSpan(
+                    text: '🟢 ${currencyFormatter.format(dp.income)}\n',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                );
-              }).toList();
+                  TextSpan(
+                    text: '🔴 ${currencyFormatter.format(dp.expense)}',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              );
             },
           ),
-          touchSpotThreshold: 30,
-          getTouchedSpotIndicator:
-              (LineChartBarData barData, List<int> spotIndexes) {
-                return spotIndexes.map((spotIndex) {
-                  return TouchedSpotIndicatorData(
-                    const FlLine(
-                      color: Colors.grey,
-                      strokeWidth: 1,
-                      dashArray: [5, 5],
-                    ),
-                    FlDotData(
-                      show: true,
-                      getDotPainter: (spot, percent, barData, index) {
-                        return FlDotCirclePainter(
-                          radius: 4,
-                          color: Colors.white,
-                          strokeWidth: 2,
-                          strokeColor: barData.color ?? Colors.grey,
-                        );
-                      },
-                    ),
-                  );
-                }).toList();
-              },
         ),
+        barGroups: barGroups,
       ),
     );
   }
@@ -1025,7 +977,6 @@ class _IncomeExpenseLineChart extends StatelessWidget {
   List<_ChartDataPoint> _processData() {
     if (transactions.isEmpty) return [];
 
-    // Sort transactions by date
     final sorted = List<Transaction>.from(transactions)
       ..sort((a, b) => a.transactionDate.compareTo(b.transactionDate));
 
@@ -1045,20 +996,17 @@ class _IncomeExpenseLineChart extends StatelessWidget {
         return _ChartDataPoint(date, income, expense);
       }).toList();
     } else {
-      // Weekly within month
       final grouped = groupBy(
         sorted,
         (t) => _getWeekOfMonth(t.transactionDate),
       );
       return grouped.entries.map((e) {
         final weekNum = e.key;
-        // Just use a representative date for sorting/charting logic if needed
         final date = DateTime(
           selectedMonth.year,
           selectedMonth.month,
           (weekNum - 1) * 7 + 1,
         );
-
         final income = e.value
             .where((t) => t.type == TransactionType.income)
             .fold(0.0, (s, t) => s + t.amount);
@@ -1613,6 +1561,517 @@ class _TopList extends StatelessWidget {
           );
         }),
       ],
+    );
+  }
+}
+
+// ── Daily Average Card ──
+class _DailyAverageCard extends StatelessWidget {
+  final List<Transaction> transactions;
+  final DateTime selectedMonth;
+
+  const _DailyAverageCard({
+    required this.transactions,
+    required this.selectedMonth,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
+
+    // Count distinct days that have transactions
+    final activeDays = transactions
+        .map((t) => DateFormat('yyyy-MM-dd').format(t.transactionDate))
+        .toSet()
+        .length;
+
+    final totalIncome = transactions
+        .where((t) => t.type == TransactionType.income)
+        .fold(0.0, (sum, t) => sum + t.amount);
+    final totalExpense = transactions
+        .where((t) => t.type == TransactionType.expense)
+        .fold(0.0, (sum, t) => sum + t.amount);
+
+    final avgIncome = activeDays > 0 ? totalIncome / activeDays : 0.0;
+    final avgExpense = activeDays > 0 ? totalExpense / activeDays : 0.0;
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.calendar_today,
+                  color: Color(0xFF14894e),
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Rata-rata Harian',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF14894e).withAlpha(25),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    '$activeDays hari aktif',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF14894e),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Expanded(
+                  child: _DailyAvgItem(
+                    label: 'Pemasukan/hari',
+                    value: currencyFormatter.format(avgIncome),
+                    color: Colors.green,
+                    icon: Icons.arrow_upward,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: _DailyAvgItem(
+                    label: 'Pengeluaran/hari',
+                    value: currencyFormatter.format(avgExpense),
+                    color: Colors.red,
+                    icon: Icons.arrow_downward,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DailyAvgItem extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  final IconData icon;
+
+  const _DailyAvgItem({
+    required this.label,
+    required this.value,
+    required this.color,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: color.withAlpha(15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withAlpha(40)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Flexible(
+                child: Text(
+                  label,
+                  style: TextStyle(fontSize: 11, color: color.withAlpha(180)),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Month-over-Month Comparison Card ──
+class _MonthComparisonCard extends ConsumerWidget {
+  final List<Transaction> currentTransactions;
+  final DateTime selectedMonth;
+
+  const _MonthComparisonCard({
+    required this.currentTransactions,
+    required this.selectedMonth,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    // Fetch previous month transactions
+    final prevStart = DateTime(selectedMonth.year, selectedMonth.month - 1, 1);
+    final prevEnd = DateTime(
+      selectedMonth.year,
+      selectedMonth.month,
+      0,
+      23,
+      59,
+      59,
+    );
+
+    final prevMonthAsync = ref.watch(
+      analyticsTransactionsProvider(
+        DateTimeRange(start: prevStart, end: prevEnd),
+      ),
+    );
+
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'id_ID',
+      symbol: 'Rp ',
+      decimalDigits: 0,
+    );
+
+    // Current month totals
+    final currIncome = currentTransactions
+        .where((t) => t.type == TransactionType.income)
+        .fold(0.0, (sum, t) => sum + t.amount);
+    final currExpense = currentTransactions
+        .where((t) => t.type == TransactionType.expense)
+        .fold(0.0, (sum, t) => sum + t.amount);
+
+    final prevMonthName = DateFormat.MMMM('id_ID').format(prevStart);
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.compare_arrows,
+                  color: Color(0xFF14894e),
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                const Expanded(
+                  child: Text(
+                    'Perbandingan Bulan Lalu',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+            const Divider(),
+            const SizedBox(height: 4),
+            prevMonthAsync.when(
+              loading: () => const Center(
+                child: Padding(
+                  padding: EdgeInsets.all(8.0),
+                  child: SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
+                ),
+              ),
+              error: (e, _) => Text(
+                'Gagal memuat data: $e',
+                style: const TextStyle(fontSize: 12),
+              ),
+              data: (prevTransactions) {
+                final prevIncome = prevTransactions
+                    .where((t) => t.type == TransactionType.income)
+                    .fold(0.0, (sum, t) => sum + t.amount);
+                final prevExpense = prevTransactions
+                    .where((t) => t.type == TransactionType.expense)
+                    .fold(0.0, (sum, t) => sum + t.amount);
+
+                final incomeChange = prevIncome > 0
+                    ? ((currIncome - prevIncome) / prevIncome * 100)
+                    : (currIncome > 0 ? 100.0 : 0.0);
+                final expenseChange = prevExpense > 0
+                    ? ((currExpense - prevExpense) / prevExpense * 100)
+                    : (currExpense > 0 ? 100.0 : 0.0);
+
+                return Column(
+                  children: [
+                    _ComparisonRow(
+                      label: 'Pemasukan',
+                      currentValue: currencyFormatter.format(currIncome),
+                      changePercent: incomeChange,
+                      previousLabel: prevMonthName,
+                      previousValue: currencyFormatter.format(prevIncome),
+                      isPositiveGood: true,
+                    ),
+                    const SizedBox(height: 12),
+                    _ComparisonRow(
+                      label: 'Pengeluaran',
+                      currentValue: currencyFormatter.format(currExpense),
+                      changePercent: expenseChange,
+                      previousLabel: prevMonthName,
+                      previousValue: currencyFormatter.format(prevExpense),
+                      isPositiveGood: false,
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ComparisonRow extends StatelessWidget {
+  final String label;
+  final String currentValue;
+  final double changePercent;
+  final String previousLabel;
+  final String previousValue;
+  final bool isPositiveGood;
+
+  const _ComparisonRow({
+    required this.label,
+    required this.currentValue,
+    required this.changePercent,
+    required this.previousLabel,
+    required this.previousValue,
+    required this.isPositiveGood,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isPositive = changePercent >= 0;
+    final isGood = isPositiveGood ? isPositive : !isPositive;
+    final trendColor = isGood ? Colors.green : Colors.red;
+    final trendIcon = isPositive ? Icons.trending_up : Icons.trending_down;
+    final sign = isPositive ? '+' : '';
+
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: trendColor.withAlpha(12),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: trendColor.withAlpha(40)),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'vs $previousLabel: $previousValue',
+                  style: TextStyle(
+                    fontSize: 11,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.color?.withAlpha(150),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(trendIcon, size: 16, color: trendColor),
+                  const SizedBox(width: 4),
+                  Text(
+                    '$sign${changePercent.toStringAsFixed(1)}%',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                      color: trendColor,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Expense-Free Days Counter ──
+class _ExpenseFreeDaysCard extends StatelessWidget {
+  final List<Transaction> transactions;
+  final DateTime selectedMonth;
+
+  const _ExpenseFreeDaysCard({
+    required this.transactions,
+    required this.selectedMonth,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    final isCurrentMonth =
+        selectedMonth.year == now.year && selectedMonth.month == now.month;
+
+    // Total days in the month (or days elapsed if current month)
+    final totalDaysInMonth = DateTime(
+      selectedMonth.year,
+      selectedMonth.month + 1,
+      0,
+    ).day;
+    final daysElapsed = isCurrentMonth ? now.day : totalDaysInMonth;
+
+    // Days with expenses
+    final expenseDays = transactions
+        .where((t) => t.type == TransactionType.expense)
+        .map((t) => DateFormat('yyyy-MM-dd').format(t.transactionDate))
+        .toSet()
+        .length;
+
+    final freeDays = daysElapsed - expenseDays;
+    final percentage = daysElapsed > 0 ? freeDays / daysElapsed : 0.0;
+
+    // Motivational message
+    String message;
+    if (percentage >= 0.7) {
+      message = 'Luar biasa! Keuanganmu sangat terkontrol 💪';
+    } else if (percentage >= 0.4) {
+      message = 'Cukup baik! Terus pertahankan 👍';
+    } else if (percentage > 0) {
+      message = 'Coba kurangi pengeluaran harianmu 💡';
+    } else {
+      message = 'Setiap hari ada pengeluaran di bulan ini';
+    }
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(
+                  Icons.event_available,
+                  color: Color(0xFF14894e),
+                  size: 18,
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Hari Tanpa Pengeluaran',
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ],
+            ),
+            const Divider(),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                // Big number
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF14894e).withAlpha(20),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(
+                    child: Text(
+                      '$freeDays',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF14894e),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$freeDays dari $daysElapsed hari',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      // Progress bar
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: LinearProgressIndicator(
+                          value: percentage,
+                          backgroundColor: Colors.grey.withAlpha(40),
+                          valueColor: const AlwaysStoppedAnimation<Color>(
+                            Color(0xFF14894e),
+                          ),
+                          minHeight: 8,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        message,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Theme.of(
+                            context,
+                          ).textTheme.bodySmall?.color?.withAlpha(180),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
