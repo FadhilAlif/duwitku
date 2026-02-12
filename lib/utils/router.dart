@@ -20,6 +20,7 @@ import 'package:duwitku/views/wallet/wallet_detail_screen.dart';
 import 'package:duwitku/views/wallet/wallet_group_screen.dart';
 import 'package:duwitku/models/wallet_group.dart';
 import 'package:duwitku/views/analytics/analytics_screen.dart';
+import 'package:duwitku/views/notification/notification_settings_screen.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:duwitku/models/transaction.dart' as t;
@@ -118,6 +119,10 @@ final router = GoRouter(
         final group = state.extra as WalletGroup?;
         return AddEditWalletGroupScreen(group: group);
       },
+    ),
+    GoRoute(
+      path: '/notification_settings',
+      builder: (context, state) => const NotificationSettingsScreen(),
     ),
     GoRoute(
       path: '/analytics',

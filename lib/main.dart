@@ -1,3 +1,4 @@
+import 'package:duwitku/services/notification_service.dart';
 import 'package:duwitku/utils/router.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -17,6 +18,10 @@ void main() async {
 
   // Initialize locale data for Indonesian
   await initializeDateFormatting('id_ID', null);
+
+  // Initialize notification service and reschedule if needed
+  await NotificationService.instance.init();
+  await NotificationService.instance.rescheduleIfEnabled();
 
   runApp(const ProviderScope(child: MainApp()));
 }

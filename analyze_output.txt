@@ -1,0 +1,4 @@
+hint: core.useBuiltinFSMonitor=true is deprecated;please set core.fsmonitor=true instead
+hint: Disable this message with "git config advice.useCoreFSMonitorConfig false"
+Analyzing notification_service.dart, notification_settings_screen.dart, router.dart, main.dart, profile_screen.dart...
+No issues found!

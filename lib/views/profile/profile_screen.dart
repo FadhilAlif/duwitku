@@ -78,7 +78,9 @@ class ProfileScreen extends ConsumerWidget {
               icon: Icons.notifications_outlined,
               title: 'Notifikasi',
               subtitle: 'Kelola pengaturan notifikasi',
-              onTap: () {},
+              onTap: () {
+                context.push('/notification_settings');
+              },
             ),
             const ProfileSectionHeader(title: 'Tindakan Akun'),
             ProfileMenuItem(
