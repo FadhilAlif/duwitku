@@ -102,7 +102,9 @@ class Transaction {
       userId: json['user_id'] as String,
       categoryId: json['category_id'] as int,
       amount: (json['amount'] as num).toDouble(),
-      transactionDate: DateTime.parse(json['transaction_date'] as String),
+      transactionDate: DateTime.parse(
+        json['transaction_date'] as String,
+      ).toLocal(),
       type: (json['type'] as String).toTransactionType,
       description: json['description'] as String?,
       sourceType: (json['source_type'] as String).toSourceType,

@@ -26,12 +26,8 @@ class TransactionRepository {
               .map((map) => Transaction.fromJson(map))
               .toList();
           return transactions.where((trx) {
-            return trx.transactionDate.isAfter(
-                  startDate.subtract(const Duration(days: 1)),
-                ) &&
-                trx.transactionDate.isBefore(
-                  endDate.add(const Duration(days: 1)),
-                );
+            return !trx.transactionDate.isBefore(startDate) &&
+                !trx.transactionDate.isAfter(endDate);
           }).toList();
         });
   }

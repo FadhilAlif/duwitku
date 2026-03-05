@@ -276,11 +276,11 @@ class _FilteredTransactionList extends ConsumerWidget {
               bottom: 80,
             ), // Add padding to avoid FAB
             elements: filteredTransactions,
-            groupBy: (trx) => DateTime(
-              trx.transactionDate.year,
-              trx.transactionDate.month,
-              trx.transactionDate.day,
-            ),
+            groupBy: (trx) {
+              // Ensure we group by date only (ignoring time)
+              final date = trx.transactionDate;
+              return DateTime(date.year, date.month, date.day);
+            },
             groupSeparatorBuilder: (DateTime date) => _ListHeader(date: date),
             itemBuilder: (context, trx) {
               final category = categoryMap[trx.categoryId];
@@ -368,8 +368,9 @@ class _TransactionListItem extends ConsumerWidget {
                   .read(transactionRepositoryProvider)
                   .deleteTransaction(transaction.id);
 
-              // Force refresh not strictly needed with stream but good practice if needed
-              // ref.invalidate(filteredTransactionsStreamProvider);
+              ref.invalidate(filteredTransactionsStreamProvider);
+              // Invalidate previous month too just in case
+              ref.invalidate(previousMonthTransactionsStreamProvider);
             } catch (e) {
               // Error handling
             }
@@ -412,6 +413,9 @@ class _TransactionListItem extends ConsumerWidget {
                   await ref
                       .read(transactionRepositoryProvider)
                       .deleteTransaction(transaction.id);
+
+                  ref.invalidate(filteredTransactionsStreamProvider);
+                  ref.invalidate(previousMonthTransactionsStreamProvider);
 
                   if (context.mounted) {
                     ScaffoldMessenger.of(context).hideCurrentSnackBar();

@@ -701,6 +701,7 @@ class _BudgetFormState extends ConsumerState<_BudgetForm> {
   Category? _selectedCategory;
   late TextEditingController _amountController;
   bool _isEditMode = false;
+  bool _isLoading = false;
 
   @override
   void initState() {
@@ -723,6 +724,8 @@ class _BudgetFormState extends ConsumerState<_BudgetForm> {
   Future<void> _submit() async {
     FocusScope.of(context).unfocus();
     if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _isLoading = true);
 
     final amount =
         double.tryParse(_amountController.text.replaceAll('.', '')) ?? 0.0;
@@ -765,6 +768,8 @@ class _BudgetFormState extends ConsumerState<_BudgetForm> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Gagal menyimpan budget: ${e.toString()}')),
       );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
   }
 
@@ -791,11 +796,17 @@ class _BudgetFormState extends ConsumerState<_BudgetForm> {
     );
 
     if (confirmed == true) {
+      if (!mounted) return;
+      setState(() => _isLoading = true);
+
       final repo = ref.read(budgetRepositoryProvider);
       try {
         await repo.deleteBudget(widget.budget!.id);
+        ref.invalidate(budgetsStreamProvider); // Force refresh
         navigator.pop(); // Close bottom sheet
       } catch (e) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
         messenger.showSnackBar(
           SnackBar(content: Text('Gagal menghapus budget: ${e.toString()}')),
         );
@@ -905,24 +916,37 @@ class _BudgetFormState extends ConsumerState<_BudgetForm> {
                 ),
               ),
               const SizedBox(height: 24),
-              Row(
-                children: [
-                  if (_isEditMode)
-                    TextButton.icon(
-                      onPressed: _delete,
-                      icon: const Icon(Icons.delete_outline),
-                      label: const Text('Hapus'),
-                      style: TextButton.styleFrom(foregroundColor: Colors.red),
-                    ),
-                  const Spacer(),
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(),
-                    child: const Text('Batal'),
+              if (_isLoading)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(16.0),
+                    child: CircularProgressIndicator(),
                   ),
-                  const SizedBox(width: 8),
-                  FilledButton(onPressed: _submit, child: const Text('Simpan')),
-                ],
-              ),
+                )
+              else
+                Row(
+                  children: [
+                    if (_isEditMode)
+                      TextButton.icon(
+                        onPressed: _delete,
+                        icon: const Icon(Icons.delete_outline),
+                        label: const Text('Hapus'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.red,
+                        ),
+                      ),
+                    const Spacer(),
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Batal'),
+                    ),
+                    const SizedBox(width: 8),
+                    FilledButton(
+                      onPressed: _submit,
+                      child: const Text('Simpan'),
+                    ),
+                  ],
+                ),
             ],
           ),
         ),
